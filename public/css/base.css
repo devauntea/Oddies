@@ -39,7 +39,46 @@
 
   --radius-sheet: 28px;
   --radius-card: 18px;
+  --radius-pill: 999px;
   --gutter: 20px;
+
+  /* Spacing: an 8 point scale */
+  --space-1: 8px;
+  --space-2: 16px;
+  --space-3: 24px;
+  --space-4: 32px;
+  --space-5: 48px;
+  --space-6: 64px;
+  --space-7: 96px;
+
+  /* Type steps. Each one is a clear jump from the last. */
+  --type-caption: 0.76rem;
+  --type-body: 1rem;
+  --type-lead: 1.24rem;
+  --type-display: clamp(3rem, 13.2vw, 4.4rem); /* the hero line, phones */
+
+  /* Elevation: two soft levels, tinted with the meadow's shadow green */
+  --lift-1: 0 1px 2px rgb(40 74 57 / 0.06), 0 6px 16px rgb(40 74 57 / 0.08);
+  --lift-2: 0 2px 4px rgb(40 74 57 / 0.08), 0 14px 32px rgb(40 74 57 / 0.14);
+
+  /* The five lives on the home page: each world's hue, deepened until the
+     line reads at 3 to 1 or better against the page. */
+  --path-designer: #3d9462;
+  --path-agent: #6680d0;
+  --path-monk: #b17b1f;
+  --path-painter: #d46a52;
+  --path-founder: #927bcb;
+
+  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 
 /* One color per world. --tone is that world's color wherever its oddie shows up. */
@@ -267,62 +306,465 @@ textarea {
   font-weight: 600;
 }
 
-/* ---------- Home ---------- */
+/* ---------- Home: the hero ---------- */
 
-.home {
-  max-width: 1080px;
-  margin: 0 auto;
-  padding: 28px var(--gutter) 56px;
-  display: grid;
-  gap: 32px;
-  align-items: center;
+/*
+  One screen. The sentence is the diagram: "One you" ends in a dot, the dot is
+  today, and the paths ahead grow out of it. Warm and calm, with one clear
+  thing to do.
+*/
+.page--home {
+  background: var(--page);
+  overflow-x: hidden;
 }
 
-.home__title {
-  margin: 0 0 20px;
-  line-height: 0;
+.hero {
+  position: relative;
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-2) var(--gutter) var(--space-3);
+  /* A soft pool of warm light, so the page has depth without a picture. */
+  background: radial-gradient(120vmax 90vmax at 30% 38%, var(--ivory), transparent 62%);
 }
 
-.home__logo {
+/* On phones the order is: logo, words, then the drawing at the bottom. */
+.hero__bar {
+  position: relative;
+  z-index: 2;
+  order: 1;
+}
+
+.hero__logo {
   display: block;
-  width: min(100%, 420px);
-  height: auto;
-  border-radius: var(--radius-sheet);
+  height: 44px;
+  width: auto;
+  border-radius: 12px;
+  box-shadow: var(--lift-1);
 }
 
-.home__promise {
+.hero__content {
+  position: relative;
+  z-index: 2;
+  order: 2;
+  padding-top: var(--space-4);
+}
+
+.hero__title {
+  margin: 0 0 var(--space-3);
   font-family: var(--font-title);
-  font-weight: 600;
-  font-size: clamp(1.9rem, 6vw, 2.9rem);
-  line-height: 1.1;
-  margin-bottom: 14px;
-  text-wrap: balance;
+  font-size: var(--type-display);
+  font-weight: 500;
+  font-variation-settings: 'SOFT' 100, 'WONK' 0;
+  line-height: 0.96;
+  letter-spacing: -0.035em;
+  text-wrap: initial;
 }
 
-.home__line {
-  font-size: 1.15rem;
-  max-width: 30em;
-  margin-bottom: 24px;
+/* Each line is a window the words rise into. */
+.hero__line {
+  display: block;
+  overflow: hidden;
+  /* Room for descenders and the italic's overhang, so nothing is clipped. */
+  padding: 0.06em 0.08em 0.14em 0;
+  margin-bottom: -0.14em;
 }
 
-.home__actions {
+.hero__line-inner {
+  display: inline-block;
+}
+
+.hero__line--many em {
+  font-style: italic;
+  font-weight: 400;
+}
+
+/* The full stop after "One you". It is today. */
+.hero__today {
+  display: inline-block;
+  width: 0.2em;
+  height: 0.2em;
+  margin-left: 0.07em;
+  border-radius: 50%;
+  background: var(--plum);
+}
+
+.hero__copy {
+  font-size: var(--type-lead);
+  line-height: 1.45;
+  max-width: 27em;
+  margin: 0 0 var(--space-4);
+}
+
+.hero__actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
+  align-items: center;
+  gap: var(--space-2);
 }
 
-.home__actions .button {
-  font-size: 1.05rem;
-  padding: 13px 28px;
+.hero__primary {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-height: 56px;
+  padding: 14px var(--space-3);
+  font-size: 1.06rem;
+  box-shadow: var(--lift-1);
 }
 
-.home__scene {
+.hero__primary:hover {
+  box-shadow: var(--lift-2);
+}
+
+.hero__arrow {
+  width: 20px;
+  height: 20px;
+}
+
+/* The second action is quiet: a link with a line that the pointer fills in. */
+.hero__secondary {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 4px;
+  font-weight: 700;
+  text-decoration: none;
+  background: linear-gradient(var(--plum), var(--plum)) left bottom 9px / 100% 2px no-repeat;
+}
+
+/* ----- The life paths ----- */
+
+.hero__paths {
   display: block;
-  width: min(100%, 440px);
-  height: auto;
-  margin: 0 auto;
-  border-radius: var(--radius-sheet);
-  box-shadow: 0 6px 16px rgb(40 74 57 / 0.12);
+  order: 3;
+  width: 100%;
+  height: clamp(220px, 31vh, 300px);
+  margin-top: auto; /* sits at the bottom of the screen on phones */
+  padding-top: var(--space-3);
+  box-sizing: content-box;
+  overflow: visible;
+}
+
+.paths__line {
+  fill: none;
+  stroke-linecap: round;
+  /* Every path is measured as length 1, so one rule can grow them all. */
+  stroke-dasharray: 1;
+  stroke-dashoffset: 0;
+}
+
+.paths__line--closed {
+  stroke: #d3c8ba; /* one step deeper than the hairline color, so closed paths still read */
+  stroke-width: 1.5;
+}
+
+.paths__line--yours {
+  stroke: var(--plum);
+  stroke-width: 2.5;
+}
+
+.paths__family--designer { --life: var(--path-designer); }
+.paths__family--agent { --life: var(--path-agent); }
+.paths__family--monk { --life: var(--path-monk); }
+.paths__family--painter { --life: var(--path-painter); }
+.paths__family--founder { --life: var(--path-founder); }
+
+.paths__line--main {
+  stroke: var(--life);
+  stroke-width: 4.5;
+}
+
+.paths__line--side {
+  stroke: var(--life);
+  stroke-width: 2.75;
+}
+
+.paths__line--twig {
+  stroke: var(--life);
+  stroke-width: 1.75;
+}
+
+.paths__end,
+.paths__traveller {
+  fill: var(--life);
+}
+
+.paths__today {
+  fill: var(--plum);
+}
+
+.paths__pulse {
+  fill: none;
+  stroke: var(--plum);
+  stroke-width: 1.5;
+  opacity: 0;
+}
+
+.paths__today-line {
+  stroke: var(--plum);
+  stroke-width: 1;
+  stroke-dasharray: 2 7;
+  opacity: 0.22;
+}
+
+/* Names and captions carry a thin edge in the page color, so a path passing
+   behind them never cuts through a letter. */
+.paths__label,
+.paths__caption {
+  paint-order: stroke;
+  stroke: var(--page);
+  stroke-width: 5px;
+  stroke-linejoin: round;
+}
+
+.paths__label {
+  font-family: var(--font-body);
+  font-size: 12.5px;
+  font-weight: 700;
+  fill: var(--plum);
+}
+
+.paths__caption {
+  font-family: var(--font-body);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  fill: var(--plum-soft);
+}
+
+/* ----- The entrance. Only when there is JS to finish it, and motion is welcome. ----- */
+
+@media (prefers-reduced-motion: no-preference) {
+  .js .hero__line-inner {
+    transform: translateY(112%);
+  }
+
+  .js .hero__copy,
+  .js .hero__actions,
+  .js .hero__logo {
+    opacity: 0;
+  }
+
+  .hero--go .hero__line-inner {
+    transform: none;
+    transition: transform 1s var(--ease-out);
+  }
+
+  .hero--go .hero__line--many .hero__line-inner {
+    transition-delay: 0.12s;
+  }
+
+  .hero--go .hero__logo {
+    opacity: 1;
+    transition: opacity 0.6s ease-out;
+  }
+
+  .hero--go .hero__copy {
+    opacity: 1;
+    transition: opacity 0.7s ease-out 0.7s;
+  }
+
+  .hero--go .hero__actions {
+    opacity: 1;
+    transition: opacity 0.7s ease-out 0.9s;
+  }
+
+  /* Paths grow from where they start. Closed ones behind you, then yours,
+     then today appears, then everything ahead grows out of it. */
+  .hero__paths:not(.paths--settled) .paths__line {
+    stroke-dashoffset: 1;
+    animation: path-grow var(--grow) var(--ease-out) var(--delay) forwards;
+  }
+
+  .hero__paths:not(.paths--settled) .paths__today,
+  .hero__paths:not(.paths--settled) .paths__end {
+    transform-box: fill-box;
+    transform-origin: center;
+    transform: scale(0);
+    animation: dot-arrive 0.5s cubic-bezier(0.3, 1.5, 0.5, 1) var(--delay) forwards;
+  }
+
+  .hero__paths:not(.paths--settled) .paths__label,
+  .hero__paths:not(.paths--settled) .paths__caption,
+  .hero__paths:not(.paths--settled) .paths__today-line {
+    opacity: 0;
+    animation: mark-arrive 0.8s ease-out var(--delay, 2.6s) forwards;
+  }
+
+  .hero__paths:not(.paths--settled) .paths__today-line {
+    animation-name: line-arrive;
+  }
+
+  /* Today breathes. */
+  .paths__pulse {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: today-breathe 3.6s ease-out 1.6s infinite;
+  }
+
+  /* The names at the ends drift a little, each at its own pace. */
+  .paths__label {
+    animation: label-drift var(--drift, 6s) ease-in-out 3.4s infinite alternate;
+  }
+
+  .hero__paths:not(.paths--settled) .paths__label {
+    animation:
+      mark-arrive 0.8s ease-out var(--delay) forwards,
+      label-drift var(--drift, 6s) ease-in-out 3.4s infinite alternate;
+  }
+
+  .hero__primary,
+  .hero__arrow,
+  .hero__secondary {
+    transition: transform 0.25s var(--ease-out), box-shadow 0.25s var(--ease-out), background-size 0.3s var(--ease-out), background-color 0.18s, border-color 0.18s;
+  }
+
+  .hero__primary:hover {
+    transform: translateY(-2px);
+  }
+
+  .hero__primary:active {
+    transform: translateY(0) scale(0.98);
+  }
+
+  .hero__primary:hover .hero__arrow {
+    transform: translateX(4px);
+  }
+
+  /* The underline pulls back and redraws from the left. */
+  .hero__secondary:hover {
+    animation: underline-redraw 0.5s var(--ease-out);
+  }
+}
+
+@keyframes path-grow {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes dot-arrive {
+  to {
+    transform: scale(1);
+  }
+}
+
+@keyframes mark-arrive {
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes line-arrive {
+  to {
+    opacity: 0.22;
+  }
+}
+
+@keyframes today-breathe {
+  0% {
+    transform: scale(1);
+    opacity: 0.55;
+  }
+  70%,
+  100% {
+    transform: scale(3.4);
+    opacity: 0;
+  }
+}
+
+@keyframes label-drift {
+  to {
+    transform: translateY(-4px);
+  }
+}
+
+@keyframes underline-redraw {
+  0% {
+    background-size: 100% 2px;
+    background-position: right bottom 9px;
+  }
+  45% {
+    background-size: 0% 2px;
+    background-position: right bottom 9px;
+  }
+  46% {
+    background-size: 0% 2px;
+    background-position: left bottom 9px;
+  }
+  100% {
+    background-size: 100% 2px;
+    background-position: left bottom 9px;
+  }
+}
+
+/* ----- Wide screens: the paths go behind the words and grow out of the dot ----- */
+
+@media (min-width: 900px) {
+  .hero {
+    padding: var(--space-3) var(--space-5) var(--space-4);
+  }
+
+  .hero__paths {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  .hero__content {
+    margin: auto 0;
+    padding: 0 0 var(--space-6) clamp(0px, 4vw, 72px);
+  }
+
+  .hero__title {
+    font-size: clamp(4.2rem, 9.2vw, 9rem);
+    margin-bottom: var(--space-4);
+  }
+
+  /* The drawing puts its own dot exactly here, so this one steps aside. */
+  .hero__today {
+    visibility: hidden;
+  }
+
+  .hero__copy {
+    font-size: 1.32rem;
+  }
+
+  .hero__actions {
+    gap: var(--space-2) var(--space-3);
+  }
+
+  .hero__primary {
+    padding: 14px var(--space-4);
+  }
+
+  .hero__logo {
+    height: 52px;
+  }
+
+  .paths__label {
+    font-size: 14px;
+  }
+
+  .paths__caption {
+    font-size: 11.5px;
+  }
+
+  .paths__line--closed {
+    stroke-width: 1.75;
+  }
+
+  .paths__line--yours {
+    stroke-width: 3.5;
+  }
 }
 
 /* ---------- Home: the opening ---------- */
@@ -375,11 +817,6 @@ textarea {
   animation: intro-leave 0.8s cubic-bezier(0.6, 0, 0.9, 0.4) forwards;
 }
 
-/* The page arrives from slightly far away, as if you moved into it. */
-.page--arriving .home {
-  animation: home-arrive 0.8s cubic-bezier(0.2, 0.7, 0.2, 1) both;
-}
-
 @keyframes intro-write {
   to {
     stroke-dashoffset: 0;
@@ -395,13 +832,6 @@ textarea {
 @keyframes intro-leave {
   to {
     transform: scale(7);
-    opacity: 0;
-  }
-}
-
-@keyframes home-arrive {
-  from {
-    transform: scale(0.86);
     opacity: 0;
   }
 }
@@ -1311,11 +1741,6 @@ summary {
 
   .panel {
     padding: 28px;
-  }
-
-  .home {
-    grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
-    padding-top: 48px;
   }
 
   .world__label {

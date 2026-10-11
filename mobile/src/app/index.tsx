@@ -1,69 +1,87 @@
-import { Redirect, router } from 'expo-router';
-import { ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { router } from 'expo-router';
+import { useState } from 'react';
+import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
-import { useProfile } from '@/features/profile';
-import { WorldMapCanvas, worldHref } from '@/features/worlds';
-import { colors, spacing, typography } from '@/theme/tokens';
-import { Button } from '@/ui';
+import { researchHref, type Level } from '@/features/research';
+import { colors, radius, spacing, typography } from '@/theme/tokens';
 
-const MAX_MAP_WIDTH = 520;
+/**
+ * PLACEHOLDER home screen. The horizontal timeline graph (owned by the timeline/UI work) will
+ * replace this. All it needs to do to hand off is:
+ *
+ *   router.push(researchHref({ topic, level, pathId }))
+ */
+const SAMPLE_BRANCHES = ['music', 'cooking', 'photography', 'coding', 'running'];
+const LEVELS: Level[] = ['beginner', 'intermediate', 'advanced'];
 
-/** Home map: the present self in the middle, four possible worlds around her. */
 export default function Home() {
-  const { profile, hydrated } = useProfile();
-  const insets = useSafeAreaInsets();
-  const { width } = useWindowDimensions();
+  const [topic, setTopic] = useState('');
+  const [level, setLevel] = useState<Level>('beginner');
 
-  if (!hydrated) return <View style={styles.screen} />;
-  if (!profile) return <Redirect href="/onboarding" />;
-
-  const mapWidth = Math.min(width, MAX_MAP_WIDTH);
+  const go = (value: string) => {
+    const trimmed = value.trim();
+    if (trimmed.length >= 2) router.push(researchHref({ topic: trimmed, level }));
+  };
 
   return (
-    <View style={styles.screen}>
-      <ScrollView
-        contentContainerStyle={[styles.content, { paddingTop: insets.top + spacing.sm }]}
-        showsVerticalScrollIndicator={false}
-      >
-        <View style={styles.header}>
-          {/* Placeholder until the approved Oddies wordmark artwork is added to assets. */}
-          <Text style={styles.wordmark} accessibilityRole="header">
-            Oddies
-          </Text>
-          <Text style={styles.tagline}>
-            {profile.name ? `${profile.name}, one you.` : 'One you.'} Many possibilities.
-          </Text>
-        </View>
-        <View
-          style={[styles.mapFrame, { width: mapWidth, borderRadius: mapWidth < width ? 24 : 0 }]}
-        >
-          <WorldMapCanvas width={mapWidth} onSelectWorld={(id) => router.push(worldHref(id))} />
-        </View>
-        <Text style={styles.hint}>Tap a world to meet that version of you.</Text>
-      </ScrollView>
+    <View style={styles.container}>
+      <Text style={styles.title}>What feels exciting today?</Text>
 
-      <View style={[styles.bar, { paddingBottom: insets.bottom + spacing.sm }]}>
-        <Button label="Your story" onPress={() => router.push('/story')} />
+      <View style={styles.row}>
+        {SAMPLE_BRANCHES.map((branch) => (
+          <Pressable key={branch} style={styles.chip} onPress={() => go(branch)}>
+            <Text style={styles.chipText}>{branch}</Text>
+          </Pressable>
+        ))}
+      </View>
+
+      <TextInput
+        value={topic}
+        onChangeText={setTopic}
+        onSubmitEditing={() => go(topic)}
+        placeholder="Or type your own branch…"
+        placeholderTextColor={colors.textMuted}
+        returnKeyType="go"
+        style={styles.input}
+      />
+
+      <View style={styles.row}>
+        {LEVELS.map((value) => (
+          <Pressable
+            key={value}
+            onPress={() => setLevel(value)}
+            accessibilityState={{ selected: level === value }}
+            style={[styles.chip, level === value && styles.chipSelected]}
+          >
+            <Text style={styles.chipText}>{value}</Text>
+          </Pressable>
+        ))}
       </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.background },
-  content: { alignItems: 'center', paddingBottom: 96, gap: spacing.md },
-  header: { alignSelf: 'stretch', paddingHorizontal: spacing.gutter, gap: 2 },
-  wordmark: { ...typography.title, fontSize: 34, lineHeight: 40, color: colors.text },
-  tagline: { ...typography.body, color: colors.textMuted },
-  mapFrame: { overflow: 'hidden' },
-  hint: { ...typography.caption, color: colors.textMuted },
-  bar: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: 0,
-    alignItems: 'center',
-    paddingTop: spacing.sm,
+  container: { flex: 1, padding: spacing.lg, gap: spacing.lg },
+  title: { ...typography.title, color: colors.text },
+  row: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
+  chip: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: radius.pill,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+  },
+  chipSelected: { borderColor: colors.pathCurrent },
+  chipText: { ...typography.body, color: colors.text },
+  input: {
+    ...typography.body,
+    color: colors.text,
+    padding: spacing.md,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
   },
 });

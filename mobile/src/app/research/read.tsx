@@ -39,7 +39,7 @@ export default function ReadScreen() {
               </Pressable>
             </>
           ) : (
-            <ActivityIndicator color={colors.primary} />
+            <ActivityIndicator color={colors.pathCurrent} />
           )}
         </View>
       )}
@@ -59,5 +59,5 @@ const styles = StyleSheet.create({
   body: { ...typography.body, color: colors.text },
   muted: { ...typography.caption, color: colors.textMuted },
   error: { ...typography.body, color: colors.danger, textAlign: 'center' },
-  link: { ...typography.button, color: colors.primary },
+  link: { ...typography.body, color: colors.pathCurrent, fontWeight: '600' },
 });

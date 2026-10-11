@@ -48,11 +48,11 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
     padding: spacing.md,
     backgroundColor: colors.surface,
-    borderRadius: radius.card,
+    borderRadius: radius.md,
     borderWidth: 1,
     borderColor: colors.border,
   },
   meta: { ...typography.caption, color: colors.textMuted },
-  title: { ...typography.bodyStrong, color: colors.text },
+  title: { ...typography.body, fontWeight: '600', color: colors.text },
   description: { ...typography.body, color: colors.textMuted },
 });

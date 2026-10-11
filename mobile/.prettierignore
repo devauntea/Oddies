@@ -5,4 +5,3 @@ web-build
 ios
 android
 package-lock.json
-src/features/worlds/art/characterRig.ts

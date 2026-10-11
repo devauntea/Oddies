@@ -52,7 +52,7 @@ export function ResearchPackView({
     }
     return (
       <View style={styles.center}>
-        <ActivityIndicator color={colors.primary} />
+        <ActivityIndicator color={colors.pathCurrent} />
         <Text style={styles.muted}>Researching {request.topic}…</Text>
       </View>
     );
@@ -165,7 +165,7 @@ const styles = StyleSheet.create({
   body: { ...typography.body, color: colors.text },
   muted: { ...typography.body, color: colors.textMuted },
   error: { ...typography.body, color: colors.danger, textAlign: 'center' },
-  link: { ...typography.button, color: colors.primary },
+  link: { ...typography.body, color: colors.pathCurrent, fontWeight: '600' },
   disabled: { opacity: 0.4 },
   notice: { ...typography.caption, color: colors.textMuted },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
@@ -177,6 +177,6 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     backgroundColor: colors.surface,
   },
-  chipSelected: { borderColor: colors.primary },
+  chipSelected: { borderColor: colors.pathCurrent },
   chipText: { ...typography.body, color: colors.text },
 });

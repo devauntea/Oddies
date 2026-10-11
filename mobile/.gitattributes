@@ -1,0 +1,10 @@
+# Normalise line endings so Windows/macOS/Linux teammates never produce whole-file diffs.
+* text=auto eol=lf
+
+*.png binary
+*.jpg binary
+*.ttf binary
+
+# Lockfile: collapse in GitHub diffs. On a merge conflict, take the base version and
+# re-run `npm install` instead of hand-editing (see CONTRIBUTING.md).
+package-lock.json linguist-generated=true -diff

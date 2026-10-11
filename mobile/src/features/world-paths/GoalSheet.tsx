@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { openResource, researchHref, type Resource } from '@/features/research';
+import { openResource, PillButton, researchHref, type Resource } from '@/features/research';
 import type { SceneWorld } from '@/features/world-map';
 import { brand, colors, radius, spacing, typography } from '@/theme/tokens';
 
@@ -71,7 +71,7 @@ export function GoalSheet({ world, path, goal, focusNote = false, onClose }: Pro
   const seeAllResearch = () => {
     if (!save()) return;
     onClose();
-    router.push(researchHref({ topic: goal.research, goal: goal.title, pathId: goal.id }));
+    router.push(researchHref({ topic: goal.research, goal: goal.title, pathId: path.worldId }));
   };
 
   const openTaskResource = (resource: Resource) => {
@@ -121,7 +121,12 @@ export function GoalSheet({ world, path, goal, focusNote = false, onClose }: Pro
               </Text>
             ) : null}
             <Text style={styles.label}>Real steps for today</Text>
-            <GoalTasks goal={goal} onOpenResource={openTaskResource} onSeeAll={seeAllResearch} />
+            <GoalTasks
+              goal={goal}
+              worldId={path.worldId}
+              onOpenResource={openTaskResource}
+              onSeeAll={seeAllResearch}
+            />
             <Text style={styles.label}>Plan date</Text>
             <TextInput
               style={styles.input}
@@ -155,18 +160,10 @@ export function GoalSheet({ world, path, goal, focusNote = false, onClose }: Pro
                 {error}
               </Text>
             ) : null}
-            <Pressable style={styles.primary} onPress={saveAndClose} accessibilityRole="button">
-              <Text style={styles.primaryText}>Save plan</Text>
-            </Pressable>
-            <Pressable
-              style={[styles.secondary, status === 'locked' && styles.disabled]}
-              disabled={status === 'locked'}
-              onPress={toggleDone}
-              accessibilityRole="button"
-              accessibilityState={{ disabled: status === 'locked' }}
-            >
-              <Text style={styles.secondaryText}>{doneLabel}</Text>
-            </Pressable>
+            <View style={styles.buttons}>
+              <PillButton primary label="Save plan" onPress={saveAndClose} />
+              <PillButton label={doneLabel} disabled={status === 'locked'} onPress={toggleDone} />
+            </View>
           </ScrollView>
         </View>
       </KeyboardAvoidingView>
@@ -260,33 +257,8 @@ const styles = StyleSheet.create({
     marginTop: spacing.sm,
     color: colors.danger,
   },
-  primary: {
-    alignItems: 'center',
+  buttons: {
+    gap: spacing.sm,
     marginTop: spacing.lg,
-    padding: spacing.lg,
-    borderRadius: radius.pill,
-    backgroundColor: colors.text,
-  },
-  primaryText: {
-    ...typography.body,
-    fontSize: 16,
-    fontWeight: '700',
-    color: colors.background,
-  },
-  secondary: {
-    alignItems: 'center',
-    marginTop: spacing.sm,
-    padding: spacing.lg,
-    borderWidth: 1.5,
-    borderColor: colors.text,
-    borderRadius: radius.pill,
-  },
-  secondaryText: {
-    ...typography.body,
-    fontWeight: '700',
-    color: colors.text,
-  },
-  disabled: {
-    opacity: 0.5,
   },
 });

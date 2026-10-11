@@ -17,6 +17,8 @@ const SHOWN = 3;
 
 type Props = {
   goal: Goal;
+  /** The world this goal belongs to; research screens wear that world's colors. */
+  worldId: string;
   /** Opens a resource (reader or browser). The sheet closes itself first. */
   onOpenResource: (resource: Resource) => void;
   /** Opens the full research pack for this goal. */
@@ -28,10 +30,11 @@ type Props = {
  * research feature's caches (last pack on the device, 30 minutes on the server) and its shared
  * task checklist, so ticking a task here also ticks it on the research screen.
  */
-export function GoalTasks({ goal, onOpenResource, onSeeAll }: Props) {
+export function GoalTasks({ goal, worldId, onOpenResource, onSeeAll }: Props) {
+  // Same request as the full research screen opened from this goal, so both share one pack.
   const request = useMemo<ResearchRequest>(
-    () => ({ topic: goal.research, goal: goal.title, level: 'beginner', pathId: goal.id }),
-    [goal.id, goal.research, goal.title],
+    () => ({ topic: goal.research, goal: goal.title, pathId: worldId }),
+    [goal.research, goal.title, worldId],
   );
   const research = useResearch(request);
   const { isDone, toggle } = useTaskProgress();

@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { PillButton } from '@/features/research';
 import { PORTRAIT_SOURCES, type SceneWorld } from '@/features/world-map';
 import { brand, colors, radius, spacing, typography } from '@/theme/tokens';
 
@@ -100,12 +101,10 @@ export function TalkSheet({ world, path, goal, onClose }: Props) {
               : 'Voice replies are coming later.'}
           </Text>
           <View style={styles.buttons}>
-            <Pressable style={styles.secondary} onPress={onClose} accessibilityRole="button">
-              <Text style={styles.secondaryText}>Close</Text>
-            </Pressable>
-            <Pressable style={styles.primary} onPress={save} accessibilityRole="button">
-              <Text style={styles.primaryText}>Save answer</Text>
-            </Pressable>
+            <PillButton label="Close" onPress={onClose} />
+            <View style={styles.grow}>
+              <PillButton primary label="Save answer" onPress={save} />
+            </View>
           </View>
         </View>
       </KeyboardAvoidingView>
@@ -190,32 +189,7 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     marginTop: spacing.lg,
   },
-  primary: {
+  grow: {
     flex: 1,
-    minHeight: 48,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: radius.pill,
-    backgroundColor: colors.text,
-  },
-  primaryText: {
-    ...typography.body,
-    fontWeight: '700',
-    color: colors.background,
-  },
-  secondary: {
-    minWidth: 100,
-    minHeight: 48,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: spacing.lg,
-    borderWidth: 1.5,
-    borderColor: colors.text,
-    borderRadius: radius.pill,
-  },
-  secondaryText: {
-    ...typography.body,
-    fontWeight: '700',
-    color: colors.text,
   },
 });

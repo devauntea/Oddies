@@ -1,0 +1,65 @@
+/*
+  Oddies base styles. This is the bare minimum to make the pages usable.
+  Designers: replace anything here. The JS only reads data attributes
+  (data-role, data-action, data-panel, data-oddie-id ...) and only writes the
+  state classes listed in the README, so class names used for looks are yours.
+*/
+
+:root {
+  color-scheme: light dark;
+  font-family: system-ui, sans-serif;
+  line-height: 1.5;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 16px;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+.button,
+button {
+  font: inherit;
+  padding: 8px 12px;
+  min-height: 44px;
+  cursor: pointer;
+}
+
+a.button {
+  display: inline-block;
+  border: 1px solid;
+  border-radius: 4px;
+  text-decoration: none;
+  color: inherit;
+}
+
+textarea,
+input {
+  font: inherit;
+  width: 100%;
+  padding: 8px;
+}
+
+label {
+  display: block;
+}
+
+.home__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.notice,
+.panel__error,
+.today-error {
+  border: 1px solid;
+  padding: 8px 12px;
+}

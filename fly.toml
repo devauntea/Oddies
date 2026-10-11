@@ -1,0 +1,31 @@
+app = "oddies"
+primary_region = "ewr"
+
+[env]
+  PORT = "8080"
+  DB_PATH = "/data/oddies.db"
+  # "Today" follows this zone, not UTC.
+  TZ = "America/New_York"
+
+# The SQLite file lives on this volume. Create it once, see the README.
+[mounts]
+  source = "oddies_data"
+  destination = "/data"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 0
+
+  [[http_service.checks]]
+    interval = "30s"
+    timeout = "5s"
+    grace_period = "10s"
+    method = "GET"
+    path = "/healthz"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "512mb"

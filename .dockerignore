@@ -1,0 +1,13 @@
+node_modules
+data
+.git
+.github
+.claude
+.env
+.env.*
+*.db
+*.db-shm
+*.db-wal
+test
+README.md
+.DS_Store

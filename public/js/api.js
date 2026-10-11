@@ -33,6 +33,7 @@ export const api = {
   chatHistory: (id) => request('GET', `/api/oddies/${id}/chat`),
   chat: (id, text) => request('POST', `/api/oddies/${id}/chat`, { text }),
   today: (oddieId, refresh = false) => request('POST', '/api/today', { oddie_id: oddieId, refresh }),
+  research: (oddieId) => request('POST', '/api/research', { oddie_id: oddieId }),
   setStepDone: (id, done) => request('PATCH', `/api/steps/${id}`, { done }),
   readStep: (id) => request('POST', `/api/steps/${id}/read`),
   resetDemo: () => request('POST', '/api/demo/reset'),

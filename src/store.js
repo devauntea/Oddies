@@ -77,8 +77,64 @@ function setSelf(db, self, today) {
 function listOddies(db) {
   const oddies = db.prepare('SELECT * FROM oddie ORDER BY branch_order, id').all().map(toOddie);
   const milestones = db.prepare('SELECT * FROM milestone ORDER BY oddie_id, position').all().map(toMilestone);
-  for (const oddie of oddies) oddie.milestones = milestones.filter((m) => m.oddie_id === oddie.id);
+  const research = researchByOddie(db);
+  for (const oddie of oddies) {
+    oddie.milestones = milestones.filter((m) => m.oddie_id === oddie.id);
+    oddie.research = research.get(oddie.id) || [];
+  }
   return oddies;
+}
+
+// Saves what Nimble found for one milestone. A new search replaces the old
+// results for that milestone. `plan` is [{ lane, query }], `resources` come
+// from research.toResource().
+function saveResearch(db, { oddieId, milestoneId, date, plan, resources }) {
+  const queryOf = Object.fromEntries(plan.map((p) => [p.lane, p.query]));
+  const insert = db.prepare(
+    `INSERT INTO source (oddie_id, milestone_id, lane, query, kind, title, url, source, snippet, found_on)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+  );
+  db.transaction(() => {
+    db.prepare('DELETE FROM source WHERE oddie_id = ? AND milestone_id IS ?').run(oddieId, milestoneId);
+    for (const r of resources) {
+      insert.run(oddieId, milestoneId, r.lane, queryOf[r.lane] || '', r.kind, r.title, r.url, r.source, r.snippet, date);
+    }
+  })();
+}
+
+// The research on record, grouped for the tree: a Map of oddie id to
+//   [{ milestone_id, found_on, lanes: [{ lane, query, count }], sources: [...] }]
+// A source has is_step true when it was also picked as a step.
+function researchByOddie(db) {
+  const rows = db.prepare('SELECT * FROM source ORDER BY oddie_id, milestone_id, id').all();
+  const stepUrls = new Set(db.prepare('SELECT oddie_id, url FROM step').all().map((s) => `${s.oddie_id} ${s.url}`));
+  const byOddie = new Map();
+  for (const row of rows) {
+    if (!byOddie.has(row.oddie_id)) byOddie.set(row.oddie_id, []);
+    const groups = byOddie.get(row.oddie_id);
+    let group = groups.find((g) => g.milestone_id === row.milestone_id);
+    if (!group) {
+      group = { milestone_id: row.milestone_id, found_on: row.found_on, lanes: [], sources: [] };
+      groups.push(group);
+    }
+    let lane = group.lanes.find((l) => l.lane === row.lane);
+    if (!lane) {
+      lane = { lane: row.lane, query: row.query, count: 0 };
+      group.lanes.push(lane);
+    }
+    lane.count += 1;
+    group.sources.push({
+      id: row.id,
+      lane: row.lane,
+      kind: row.kind,
+      title: row.title,
+      url: row.url,
+      source: row.source,
+      snippet: row.snippet,
+      is_step: stepUrls.has(`${row.oddie_id} ${row.url}`),
+    });
+  }
+  return byOddie;
 }
 
 function getOddie(db, id) {
@@ -89,6 +145,7 @@ function getOddie(db, id) {
     .prepare('SELECT * FROM milestone WHERE oddie_id = ? ORDER BY position')
     .all(oddie.id)
     .map(toMilestone);
+  oddie.research = researchByOddie(db).get(oddie.id) || [];
   return oddie;
 }
 
@@ -345,6 +402,7 @@ module.exports = {
   STEPS_TO_REACH,
   cleanOddie,
   addOddie,
+  saveResearch,
   getSelf,
   setSelf,
   listOddies,

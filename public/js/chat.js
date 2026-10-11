@@ -44,7 +44,7 @@ export function initChat(panel) {
     oddie = nextOddie;
     log.replaceChildren();
     empty.hidden = false;
-    empty.textContent = `Ask ${oddie.name} what that life was like, what it cost, or what to do first.`;
+    empty.textContent = `What draws you here? Ask ${oddie.name} what this life is like, what it cost, or what you could try this week.`;
     setNotice(error, '');
     setNotice(status, '');
     try {

@@ -129,11 +129,13 @@ async function pickSteps({ gemini, context, resources }) {
   return { steps: kept, proposed: proposed.length, source: 'gemini' };
 }
 
-// Records the pick and returns { pick, milestone, steps }.
+// Researches the next milestone on one branch and returns { pick, milestone, steps }.
+// With `setPick` it also makes that branch today's pick. Without it, the
+// branch is researched and the day's pick is left alone.
 // Steps already found for this branch today are reused unless `refresh` is set.
-async function buildToday({ db, gemini, nimble, oddieId, date, refresh = false }) {
+async function buildToday({ db, gemini, nimble, oddieId, date, refresh = false, setPick = true }) {
   const oddie = store.getOddie(db, oddieId);
-  const pick = store.setPick(db, date, oddie.id);
+  const pick = setPick ? store.setPick(db, date, oddie.id) : store.getPick(db, date);
   const milestone = store.nextMilestone(db, oddie.id);
 
   const existing = store.stepsFor(db, oddie.id, date);
@@ -159,6 +161,9 @@ async function buildToday({ db, gemini, nimble, oddieId, date, refresh = false }
       const planMs = lap();
       const { resources, failed } = await searchAll(nimble, plan);
       const searchMs = lap();
+      // Keep everything Nimble found, so the tree can show the research and its
+      // sources even for pages that do not become steps.
+      store.saveResearch(db, { oddieId: oddie.id, milestoneId: milestone ? milestone.id : null, date, plan, resources });
       const { steps: kept, proposed, source: pickSource } = await pickSteps({ gemini, context, resources });
       const pickMs = lap();
 

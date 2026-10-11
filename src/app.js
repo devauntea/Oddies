@@ -8,6 +8,8 @@ const { buildToday, readStep } = require('./today');
 const store = require('./store');
 
 const PUBLIC_DIR = path.join(__dirname, '..', 'public');
+// Shared art and scene layout, also bundled by the Expo app in /mobile. See assets/README.md.
+const ASSETS_DIR = path.join(__dirname, '..', 'assets');
 const MAX_CHAT_CHARS = 2000;
 const MAX_INTAKE_CHARS = 20000;
 
@@ -181,6 +183,22 @@ function createApp({ db, gemini, nimble }) {
     res.json(result);
   });
 
+  // Researches a branch's next milestone without making it today's pick.
+  app.post('/api/research', limitAi, async (req, res) => {
+    const body = req.body || {};
+    if (!Number.isInteger(body.oddie_id)) throw new HttpError(400, 'invalid_input', 'oddie_id is required');
+    const result = await buildToday({
+      db,
+      gemini,
+      nimble,
+      oddieId: body.oddie_id,
+      date: todayISO(),
+      refresh: true,
+      setPick: false,
+    });
+    res.json(result);
+  });
+
   app.patch('/api/steps/:id', (req, res) => {
     const done = req.body ? req.body.done : undefined;
     if (done !== undefined && typeof done !== 'boolean') throw new HttpError(400, 'invalid_input', 'done must be true or false');
@@ -204,6 +222,7 @@ function createApp({ db, gemini, nimble }) {
     throw new HttpError(404, 'not_found', `No route for ${req.method} ${req.originalUrl}`);
   });
 
+  app.use('/assets', express.static(ASSETS_DIR));
   app.use(express.static(PUBLIC_DIR, { extensions: ['html'] }));
 
   app.use((req, res) => {

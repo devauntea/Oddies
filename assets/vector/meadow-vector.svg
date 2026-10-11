@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1536" width="1024" height="1536">
+  <title>Oddies meadow, vector</title>
+  <desc>Editable vector stand-in for map/00_background.webp: grass gradient, paths and clearing.
+Same canvas and path geometry as the raster layer, so world, meadow and character layers sit on it unchanged.</desc>
+  <defs>
+    <radialGradient id="grass" gradientUnits="userSpaceOnUse" cx="512" cy="780" r="980">
+      <stop offset="0" stop-color="#C4E879"/>
+      <stop offset="0.5" stop-color="#93C873"/>
+      <stop offset="1" stop-color="#3FAA6E"/>
+    </radialGradient>
+  </defs>
+  <rect width="1024" height="1536" fill="url(#grass)"/>
+  <g fill="#000" opacity="0.045">
+    <path d="M0 610 C120 590 250 640 290 700 C320 760 210 790 120 800 C60 806 20 820 0 830Z"/>
+    <path d="M1024 760 C900 770 790 800 800 850 C810 900 930 920 1024 930Z"/>
+    <path d="M0 1180 C140 1150 300 1200 430 1240 C520 1270 480 1320 360 1330 C220 1340 90 1320 0 1330Z"/>
+    <path d="M1024 1300 C880 1280 700 1320 640 1380 C600 1440 760 1470 1024 1460Z"/>
+  </g>
+  <g id="paths" fill="none" stroke="#FFE8AA" stroke-width="34" stroke-linecap="round" stroke-linejoin="round">
+    <path id="path-serenity" data-world="serenity" d="M448 712 C445 703.3 434.7 678.7 430 660 C425.3 641.3 424.2 617.5 420 600 C415.8 582.5 412.5 567.2 405 555 C397.5 542.8 389.2 534.3 375 527 C360.8 519.7 339.8 515.5 320 511 C300.2 506.5 272.7 505.5 256 500 C239.3 494.5 230.2 487.2 220 478 C209.8 468.8 204.2 456.3 195 445 C185.8 433.7 176.2 419.2 165 410 C153.8 400.8 144.8 396.5 128 390 C111.2 383.5 85.3 374.8 64 371 C42.7 367.2 10.7 367.7 0 367"/>
+    <path id="path-midnight" data-world="midnight" d="M598 716 C602.5 710 613.8 692.7 625 680 C636.2 667.3 652.3 652.5 665 640 C677.7 627.5 692.5 617.3 701 605 C709.5 592.7 709.7 578.2 716 566 C722.3 553.8 728.8 540.5 739 532 C749.2 523.5 764.3 520.3 777 515 C789.7 509.7 804 510.5 815 500 C826 489.5 833.8 464.5 843 452 C852.2 439.5 857.2 433.7 870 425 C882.8 416.3 903.3 405.8 920 400 C936.7 394.2 952.7 392 970 390 C987.3 388 1015 388.3 1024 388"/>
+    <path id="path-artist" data-world="artist" d="M380 800 C371.7 800.8 345.8 802.5 330 805 C314.2 807.5 297.5 809.2 285 815 C272.5 820.8 262.5 829.2 255 840 C247.5 850.8 245 865 240 880 C235 895 230 914.2 225 930 C220 945.8 217.5 961.7 210 975 C202.5 988.3 193.7 999.7 180 1010 C166.3 1020.3 147.3 1028.7 128 1037 C108.7 1045.3 85.3 1052.8 64 1060 C42.7 1067.2 10.7 1076.7 0 1080"/>
+    <path id="path-founder" data-world="founder" d="M646 812 C653.3 814.7 676.8 820.8 690 828 C703.2 835.2 715.8 843.8 725 855 C734.2 866.2 740 880 745 895 C750 910 751.2 929.2 755 945 C758.8 960.8 760.5 976.7 768 990 C775.5 1003.3 786.3 1014.2 800 1025 C813.7 1035.8 834 1046.2 850 1055 C866 1063.8 877.7 1071.8 896 1078 C914.3 1084.2 938.7 1087.5 960 1092 C981.3 1096.5 1013.3 1102.8 1024 1105"/>
+  </g>
+  <g id="clearing">
+    <ellipse cx="512" cy="815" rx="135" ry="104" fill="#FFE8AA"/>
+    <ellipse cx="512" cy="815" rx="112" ry="80" fill="#FFDFA6"/>
+    <ellipse cx="512" cy="815" rx="70" ry="48" fill="#FFE8B8"/>
+  </g>
+</svg>

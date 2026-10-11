@@ -95,6 +95,56 @@ test('today records the pick and returns steps for the next unreached milestone'
   assert.equal(state.history.at(-1).oddie_id, 1);
 });
 
+test('everything Nimble found is kept as research, with its lane, query and link', async (t) => {
+  const app = await startApp({ gemini: fakeGemini(GOOD_PICKS), nimble: fakeNimble() });
+  t.after(app.close);
+  const { milestone } = (await app.call('POST', '/api/today', { oddie_id: 1 })).json;
+
+  const state = (await app.call('GET', '/api/state')).json;
+  const designer = state.oddies.find((o) => o.id === 1);
+  assert.equal(designer.research.length, 1);
+  const research = designer.research[0];
+  assert.equal(research.milestone_id, milestone.id);
+  assert.deepEqual(research.lanes, [
+    { lane: 'events', query: PLAN[0].query, count: 2 },
+    { lane: 'overview', query: PLAN[1].query, count: 1 },
+    { lane: 'apply', query: PLAN[2].query, count: 1 },
+  ]);
+  assert.equal(research.sources.length, 4, 'all four pages, not only the three picked');
+  const meetup = research.sources.find((s) => s.title === 'Designer meetup');
+  assert.equal(meetup.url, 'https://example.org/meetups/designers/');
+  assert.equal(meetup.source, 'example.org');
+  assert.equal(meetup.is_step, false, 'found but not picked');
+  assert.equal(research.sources.filter((s) => s.is_step).length, 3);
+  assert.deepEqual(state.oddies.find((o) => o.id === 2).research, [], 'other paths have none yet');
+
+  // Searching the same milestone again replaces its sources instead of stacking them.
+  await app.call('POST', '/api/today', { oddie_id: 1, refresh: true });
+  assert.equal((await app.call('GET', '/api/state')).json.oddies[0].research[0].sources.length, 4);
+});
+
+test('a path can be researched without becoming today\'s pick', async (t) => {
+  const app = await startApp({ gemini: fakeGemini(GOOD_PICKS), nimble: fakeNimble() });
+  t.after(app.close);
+
+  await app.call('POST', '/api/today', { oddie_id: 2 });
+  const res = await app.call('POST', '/api/research', { oddie_id: 1 });
+  assert.equal(res.status, 200);
+  assert.equal(res.json.steps.length, 3);
+
+  const state = (await app.call('GET', '/api/state')).json;
+  assert.equal(state.today_pick.oddie_id, 2, 'the pick did not move');
+  assert.equal(state.oddies.find((o) => o.id === 1).research[0].sources.length, 4);
+  assert.equal((await app.call('POST', '/api/research', {})).status, 400);
+});
+
+test('a failed search leaves no research behind', async (t) => {
+  const app = await startApp({ gemini: fakeGemini(GOOD_PICKS), nimble: fakeNimble(ALL_DOWN) });
+  t.after(app.close);
+  await app.call('POST', '/api/today', { oddie_id: 1 });
+  assert.deepEqual((await app.call('GET', '/api/state')).json.oddies[0].research, [], 'a failed search leaves no sources');
+});
+
 test("each lane searches with the team's Nimble settings", async (t) => {
   const nimble = fakeNimble();
   const app = await startApp({ gemini: fakeGemini(GOOD_PICKS), nimble });
@@ -354,4 +404,7 @@ test('keepRealSteps matches URLs loosely but saves the URL Nimble gave', () => {
   assert.equal(research.normalizeUrl('not a url'), null);
   assert.equal(research.toResource({ title: 'Talk', url: 'https://www.youtube.com/watch?v=1' }, 'overview').kind, 'video');
   assert.equal(research.toResource({ title: 'Guide', url: 'https://example.org/guide.pdf' }, 'overview').kind, 'document');
+  const messy = research.toResource({ title: '## Retreat | Zen', url: 'https://example.org/r', snippet: 'Options #### Dates: **Dec 17** [details](https://x.test)' }, 'events');
+  assert.equal(messy.title, 'Retreat Zen');
+  assert.equal(messy.snippet, 'Options Dates: Dec 17 details');
 });

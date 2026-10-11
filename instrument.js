@@ -20,6 +20,8 @@ if (process.env.SENTRY_DSN) {
     // token counts. Sentry's built-in Gemini integration would record each
     // call a second time, so it is switched off.
     integrations: (integrations) => integrations.filter((integration) => integration.name !== 'Google_GenAI'),
+    // The Sentry project is shared with the mobile app. This tag tells the two apart.
+    initialScope: { tags: { app: 'oddies-web' } },
   });
   console.log('Sentry: on');
 } else {

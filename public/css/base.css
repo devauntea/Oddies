@@ -1,234 +1,1426 @@
 /*
-  Oddies base styles. This is the bare minimum to make the pages usable.
-  Designers: replace anything here. The JS only reads data attributes
-  (data-role, data-action, data-panel, data-oddie-id ...) and only writes the
-  state classes listed in the README, so class names used for looks are yours.
+  Oddies styles. Follows the team's playbook (temporal/style.md): ivory
+  surfaces, plum text, iris for selected things, Fraunces for titles and
+  Nunito Sans for everything else. Each world brings its own color.
+
+  The JS only reads data attributes (data-role, data-action, data-panel,
+  data-oddie-id ...) and only writes the state classes listed in the README,
+  so every class here is safe to restyle.
 */
 
+/* ---------- Tokens ---------- */
+
 :root {
-  color-scheme: light dark;
-  font-family: system-ui, sans-serif;
-  line-height: 1.5;
+  color-scheme: light;
+
+  /* Identity palette */
+  --ivory: #fff8ef;
+  --plum: #352a3d;
+  --iris: #b4a0db;
+  --saffron: #d4a04c;
+  --navy: #34455e;
+  --coral: #e99d8b;
+
+  /* Scene colors */
+  --grass-center: #c4e879;
+  --grass-mid: #93c873;
+  --grass-edge: #60a877;
+  --path: #ffe8aa;
+  --shadow: #284a39;
+
+  /* Working colors built from the above */
+  --page: #f8f5ed;
+  --line: #ddd4cb;
+  --plum-soft: #5c5263; /* quieter text */
+  --iris-soft: #e6def5;
+
+  --font-title: 'Fraunces', Georgia, 'Times New Roman', serif;
+  --font-body: 'Nunito Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+
+  --radius-sheet: 28px;
+  --radius-card: 18px;
+  --radius-pill: 999px;
+  --gutter: 20px;
+
+  /* Spacing: an 8 point scale */
+  --space-1: 8px;
+  --space-2: 16px;
+  --space-3: 24px;
+  --space-4: 32px;
+  --space-5: 48px;
+  --space-6: 64px;
+  --space-7: 96px;
+
+  /* Type steps. Each one is a clear jump from the last. */
+  --type-caption: 0.76rem;
+  --type-body: 1rem;
+  --type-lead: 1.24rem;
+  --type-display: clamp(3rem, 13.2vw, 4.4rem); /* the hero line, phones */
+
+  /* Elevation: two soft levels, tinted with the meadow's shadow green */
+  --lift-1: 0 1px 2px rgb(40 74 57 / 0.06), 0 6px 16px rgb(40 74 57 / 0.08);
+  --lift-2: 0 2px 4px rgb(40 74 57 / 0.08), 0 14px 32px rgb(40 74 57 / 0.14);
+
+  /* The five lives on the home page: each world's hue, deepened until the
+     line reads at 3 to 1 or better against the page. */
+  --path-designer: #3d9462;
+  --path-agent: #6680d0;
+  --path-monk: #b17b1f;
+  --path-painter: #d46a52;
+  --path-founder: #927bcb;
+
+  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
 }
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* One color per world. --tone is that world's color wherever its oddie shows up. */
+[data-world='serenity'] { --tone: #f6d173; }
+[data-world='midnight'] { --tone: #8198d9; }
+[data-world='artist'] { --tone: #f4a48d; }
+[data-world='founder'] { --tone: #bba0e2; }
+[data-world='none'] { --tone: var(--grass-center); }
+
+/* ---------- Base ---------- */
 
 * {
   box-sizing: border-box;
 }
 
+html {
+  font-family: var(--font-body);
+  font-size: 106.25%; /* 17px body */
+  line-height: 1.5;
+  -webkit-text-size-adjust: 100%;
+}
+
 body {
   margin: 0;
-  padding: 16px;
+  background: var(--page);
+  color: var(--plum);
 }
 
 [hidden] {
   display: none !important;
 }
 
-/* Links use the text color so they stay readable in light and dark. */
-a {
-  color: inherit;
+h1,
+h2,
+h3 {
+  font-family: var(--font-title);
+  font-weight: 600;
+  line-height: 1.15;
+  margin: 0 0 12px;
+  text-wrap: balance;
 }
+
+h1 {
+  font-size: clamp(1.75rem, 5vw, 2.4rem);
+}
+
+h2 {
+  font-size: 1.45rem;
+}
+
+h3 {
+  font-size: 1.1rem;
+  margin-top: 28px;
+}
+
+p {
+  margin: 0 0 12px;
+}
+
+a {
+  color: var(--plum);
+  text-underline-offset: 3px;
+}
+
+:focus-visible {
+  outline: 3px solid var(--plum);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 7px var(--iris);
+}
+
+/* ---------- Buttons ---------- */
 
 .button,
 button {
   font: inherit;
-  padding: 8px 12px;
+  font-weight: 600;
   min-height: 44px;
+  padding: 10px 22px;
+  border: 2px solid var(--plum);
+  border-radius: 999px;
+  background: var(--plum);
+  color: var(--ivory);
   cursor: pointer;
 }
 
 a.button {
-  display: inline-block;
-  border: 1px solid;
-  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   text-decoration: none;
-  color: inherit;
+}
+
+.button:hover,
+button:hover {
+  background: var(--navy);
+  border-color: var(--navy);
+}
+
+button:disabled {
+  opacity: 0.55;
+  cursor: progress;
+}
+
+/* Quieter buttons, so each screen has one clear main action. */
+.panel__close,
+.oddie-actions button,
+.step__read,
+.step-list__refresh,
+.draft-card__remove,
+.site-header__reset,
+.branch-list__choose,
+[data-action='start-own'],
+[data-action='draft-manual'],
+[data-action='draft-add'] {
+  background: transparent;
+  color: var(--plum);
+}
+
+.panel__close:hover,
+.oddie-actions button:hover,
+.step__read:hover,
+.step-list__refresh:hover,
+.draft-card__remove:hover,
+.site-header__reset:hover,
+.branch-list__choose:hover,
+[data-action='start-own']:hover,
+[data-action='draft-manual']:hover,
+[data-action='draft-add']:hover {
+  background: var(--iris-soft);
+  border-color: var(--plum);
+  color: var(--plum);
+}
+
+/* ---------- Forms ---------- */
+
+label {
+  display: block;
+  font-weight: 600;
 }
 
 textarea,
 input {
   font: inherit;
   width: 100%;
-  padding: 8px;
+  padding: 12px 14px;
+  border: 2px solid var(--line);
+  border-radius: var(--radius-card);
+  background: var(--ivory);
+  color: var(--plum);
 }
 
-label {
-  display: block;
+textarea:focus-visible,
+input:focus-visible {
+  border-color: var(--plum);
 }
 
-.home__actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
+textarea {
+  resize: vertical;
 }
+
+/* ---------- Notices and errors ---------- */
 
 .notice,
 .panel__error,
-.today-error {
-  border: 1px solid;
-  padding: 8px 12px;
+.today-error,
+.today__status,
+.chat__status {
+  border-radius: var(--radius-card);
+  padding: 12px 16px;
+  margin: 12px 0;
 }
 
-.site-header,
-.site-header__nav,
-.panel__header {
+.notice,
+.today__status,
+.chat__status {
+  background: var(--iris-soft);
+}
+
+.notice {
+  margin: 12px var(--gutter);
+}
+
+.panel__error,
+.today-error {
+  background: #fbd9d0; /* coral, lightened */
+}
+
+/* ---------- Header ---------- */
+
+.site-header {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: 8px 16px;
+  padding: 12px var(--gutter);
+  border-bottom: 1px solid var(--line);
 }
 
-/* ---------- Tree ---------- */
-
-/* The tree keeps a readable size and scrolls sideways on small screens. */
-.tree-scroll {
-  overflow-x: auto;
-  border: 1px solid;
-}
-
-.tree {
+.site-header__home {
   display: block;
+  line-height: 0;
+  border-radius: 14px;
+}
+
+/* The wordmark artwork, on its own green. */
+.site-header__logo {
+  display: block;
+  height: 48px;
+  width: auto;
+  border-radius: 14px;
+}
+
+.site-header__nav {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 20px;
+}
+
+.site-header__nav a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  font-weight: 600;
+}
+
+/* ---------- Home: the hero ---------- */
+
+/*
+  One screen. The sentence is the diagram: "One you" ends in a dot, the dot is
+  today, and the paths ahead grow out of it. Warm and calm, with one clear
+  thing to do.
+*/
+.page--home {
+  background: var(--page);
+  overflow-x: hidden;
+}
+
+.hero {
+  position: relative;
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-2) var(--gutter) var(--space-3);
+  /* A soft pool of warm light, so the page has depth without a picture. */
+  background: radial-gradient(120vmax 90vmax at 30% 38%, var(--ivory), transparent 62%);
+}
+
+/* On phones the order is: logo, words, then the drawing at the bottom. */
+.hero__bar {
+  position: relative;
+  z-index: 2;
+  order: 1;
+}
+
+.hero__logo {
+  display: block;
+  height: 44px;
+  width: auto;
+  border-radius: 12px;
+  box-shadow: var(--lift-1);
+}
+
+.hero__content {
+  position: relative;
+  z-index: 2;
+  order: 2;
+  padding-top: var(--space-4);
+}
+
+.hero__title {
+  margin: 0 0 var(--space-3);
+  font-family: var(--font-title);
+  font-size: var(--type-display);
+  font-weight: 500;
+  font-variation-settings: 'SOFT' 100, 'WONK' 0;
+  line-height: 0.96;
+  letter-spacing: -0.035em;
+  text-wrap: initial;
+}
+
+/* Each line is a window the words rise into. */
+.hero__line {
+  display: block;
+  overflow: hidden;
+  /* Room for descenders and the italic's overhang, so nothing is clipped. */
+  padding: 0.06em 0.08em 0.14em 0;
+  margin-bottom: -0.14em;
+}
+
+.hero__line-inner {
+  display: inline-block;
+}
+
+.hero__line--many em {
+  font-style: italic;
+  font-weight: 400;
+}
+
+/* The full stop after "One you". It is today. */
+.hero__today {
+  display: inline-block;
+  width: 0.2em;
+  height: 0.2em;
+  margin-left: 0.07em;
+  border-radius: 50%;
+  background: var(--plum);
+}
+
+.hero__copy {
+  font-size: var(--type-lead);
+  line-height: 1.45;
+  max-width: 27em;
+  margin: 0 0 var(--space-4);
+}
+
+.hero__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.hero__primary {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-height: 56px;
+  padding: 14px var(--space-3);
+  font-size: 1.06rem;
+  box-shadow: var(--lift-1);
+}
+
+.hero__primary:hover {
+  box-shadow: var(--lift-2);
+}
+
+.hero__arrow {
+  width: 20px;
+  height: 20px;
+}
+
+/* The second action is quiet: a link with a line that the pointer fills in. */
+.hero__secondary {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 4px;
+  font-weight: 700;
+  text-decoration: none;
+  background: linear-gradient(var(--plum), var(--plum)) left bottom 9px / 100% 2px no-repeat;
+}
+
+/* ----- The life paths ----- */
+
+.hero__paths {
+  display: block;
+  order: 3;
   width: 100%;
-  min-width: 1100px;
-  height: auto;
+  height: clamp(220px, 31vh, 300px);
+  margin-top: auto; /* sits at the bottom of the screen on phones */
+  padding-top: var(--space-3);
+  box-sizing: content-box;
+  overflow: visible;
 }
 
-.tree text {
-  fill: currentColor;
-  font-size: 13px;
-}
-
-.tree-branch__line {
+.paths__line {
   fill: none;
-  stroke: currentColor;
-  stroke-width: 2;
+  stroke-linecap: round;
+  /* Every path is measured as length 1, so one rule can grow them all. */
+  stroke-dasharray: 1;
+  stroke-dashoffset: 0;
 }
 
-.tree-branch--picked .tree-branch__line {
-  stroke-width: 6;
+.paths__line--closed {
+  stroke: #d3c8ba; /* one step deeper than the hairline color, so closed paths still read */
+  stroke-width: 1.5;
 }
 
-.tree-branch--dormant .tree-branch__line {
-  stroke-dasharray: 4 6;
+.paths__line--yours {
+  stroke: var(--plum);
+  stroke-width: 2.5;
 }
 
-.tree-milestone__node {
-  fill: Canvas;
-  stroke: currentColor;
-  stroke-width: 2;
+.paths__family--designer { --life: var(--path-designer); }
+.paths__family--agent { --life: var(--path-agent); }
+.paths__family--monk { --life: var(--path-monk); }
+.paths__family--painter { --life: var(--path-painter); }
+.paths__family--founder { --life: var(--path-founder); }
+
+.paths__line--main {
+  stroke: var(--life);
+  stroke-width: 4.5;
 }
 
-.tree-milestone--reached .tree-milestone__node {
-  fill: currentColor;
+.paths__line--side {
+  stroke: var(--life);
+  stroke-width: 2.75;
 }
 
-.tree-oddie {
+.paths__line--twig {
+  stroke: var(--life);
+  stroke-width: 1.75;
+}
+
+.paths__end,
+.paths__traveller {
+  fill: var(--life);
+}
+
+.paths__today {
+  fill: var(--plum);
+}
+
+.paths__pulse {
+  fill: none;
+  stroke: var(--plum);
+  stroke-width: 1.5;
+  opacity: 0;
+}
+
+.paths__today-line {
+  stroke: var(--plum);
+  stroke-width: 1;
+  stroke-dasharray: 2 7;
+  opacity: 0.22;
+}
+
+/* Names and captions carry a thin edge in the page color, so a path passing
+   behind them never cuts through a letter. */
+.paths__label,
+.paths__caption {
+  paint-order: stroke;
+  stroke: var(--page);
+  stroke-width: 5px;
+  stroke-linejoin: round;
+}
+
+.paths__label {
+  font-family: var(--font-body);
+  font-size: 12.5px;
+  font-weight: 700;
+  fill: var(--plum);
+}
+
+.paths__caption {
+  font-family: var(--font-body);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  fill: var(--plum-soft);
+}
+
+/* ----- The entrance. Only when there is JS to finish it, and motion is welcome. ----- */
+
+@media (prefers-reduced-motion: no-preference) {
+  .js .hero__line-inner {
+    transform: translateY(112%);
+  }
+
+  .js .hero__copy,
+  .js .hero__actions,
+  .js .hero__logo {
+    opacity: 0;
+  }
+
+  .hero--go .hero__line-inner {
+    transform: none;
+    transition: transform 1s var(--ease-out);
+  }
+
+  .hero--go .hero__line--many .hero__line-inner {
+    transition-delay: 0.12s;
+  }
+
+  .hero--go .hero__logo {
+    opacity: 1;
+    transition: opacity 0.6s ease-out;
+  }
+
+  .hero--go .hero__copy {
+    opacity: 1;
+    transition: opacity 0.7s ease-out 0.7s;
+  }
+
+  .hero--go .hero__actions {
+    opacity: 1;
+    transition: opacity 0.7s ease-out 0.9s;
+  }
+
+  /* Paths grow from where they start. Closed ones behind you, then yours,
+     then today appears, then everything ahead grows out of it. */
+  .hero__paths:not(.paths--settled) .paths__line {
+    stroke-dashoffset: 1;
+    animation: path-grow var(--grow) var(--ease-out) var(--delay) forwards;
+  }
+
+  .hero__paths:not(.paths--settled) .paths__today,
+  .hero__paths:not(.paths--settled) .paths__end {
+    transform-box: fill-box;
+    transform-origin: center;
+    transform: scale(0);
+    animation: dot-arrive 0.5s cubic-bezier(0.3, 1.5, 0.5, 1) var(--delay) forwards;
+  }
+
+  .hero__paths:not(.paths--settled) .paths__label,
+  .hero__paths:not(.paths--settled) .paths__caption,
+  .hero__paths:not(.paths--settled) .paths__today-line {
+    opacity: 0;
+    animation: mark-arrive 0.8s ease-out var(--delay, 2.6s) forwards;
+  }
+
+  .hero__paths:not(.paths--settled) .paths__today-line {
+    animation-name: line-arrive;
+  }
+
+  /* Today breathes. */
+  .paths__pulse {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: today-breathe 3.6s ease-out 1.6s infinite;
+  }
+
+  /* The names at the ends drift a little, each at its own pace. */
+  .paths__label {
+    animation: label-drift var(--drift, 6s) ease-in-out 3.4s infinite alternate;
+  }
+
+  .hero__paths:not(.paths--settled) .paths__label {
+    animation:
+      mark-arrive 0.8s ease-out var(--delay) forwards,
+      label-drift var(--drift, 6s) ease-in-out 3.4s infinite alternate;
+  }
+
+  .hero__primary,
+  .hero__arrow,
+  .hero__secondary {
+    transition: transform 0.25s var(--ease-out), box-shadow 0.25s var(--ease-out), background-size 0.3s var(--ease-out), background-color 0.18s, border-color 0.18s;
+  }
+
+  .hero__primary:hover {
+    transform: translateY(-2px);
+  }
+
+  .hero__primary:active {
+    transform: translateY(0) scale(0.98);
+  }
+
+  .hero__primary:hover .hero__arrow {
+    transform: translateX(4px);
+  }
+
+  /* The underline pulls back and redraws from the left. */
+  .hero__secondary:hover {
+    animation: underline-redraw 0.5s var(--ease-out);
+  }
+}
+
+@keyframes path-grow {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes dot-arrive {
+  to {
+    transform: scale(1);
+  }
+}
+
+@keyframes mark-arrive {
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes line-arrive {
+  to {
+    opacity: 0.22;
+  }
+}
+
+@keyframes today-breathe {
+  0% {
+    transform: scale(1);
+    opacity: 0.55;
+  }
+  70%,
+  100% {
+    transform: scale(3.4);
+    opacity: 0;
+  }
+}
+
+@keyframes label-drift {
+  to {
+    transform: translateY(-4px);
+  }
+}
+
+@keyframes underline-redraw {
+  0% {
+    background-size: 100% 2px;
+    background-position: right bottom 9px;
+  }
+  45% {
+    background-size: 0% 2px;
+    background-position: right bottom 9px;
+  }
+  46% {
+    background-size: 0% 2px;
+    background-position: left bottom 9px;
+  }
+  100% {
+    background-size: 100% 2px;
+    background-position: left bottom 9px;
+  }
+}
+
+/* ----- Wide screens: the paths go behind the words and grow out of the dot ----- */
+
+@media (min-width: 900px) {
+  .hero {
+    padding: var(--space-3) var(--space-5) var(--space-4);
+  }
+
+  .hero__paths {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  .hero__content {
+    margin: auto 0;
+    padding: 0 0 var(--space-6) clamp(0px, 4vw, 72px);
+  }
+
+  .hero__title {
+    font-size: clamp(4.2rem, 9.2vw, 9rem);
+    margin-bottom: var(--space-4);
+  }
+
+  /* The drawing puts its own dot exactly here, so this one steps aside. */
+  .hero__today {
+    visibility: hidden;
+  }
+
+  .hero__copy {
+    font-size: 1.32rem;
+  }
+
+  .hero__actions {
+    gap: var(--space-2) var(--space-3);
+  }
+
+  .hero__primary {
+    padding: 14px var(--space-4);
+  }
+
+  .hero__logo {
+    height: 52px;
+  }
+
+  .paths__label {
+    font-size: 14px;
+  }
+
+  .paths__caption {
+    font-size: 11.5px;
+  }
+
+  .paths__line--closed {
+    stroke-width: 1.75;
+  }
+
+  .paths__line--yours {
+    stroke-width: 3.5;
+  }
+}
+
+/* ---------- Home: the opening ---------- */
+
+/* A green screen, the logo's green, where "Oddies" is written in cursive.
+   Then it grows past the viewer and the page settles in behind it. */
+.intro {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  display: grid;
+  place-items: center;
+  background: #087e49;
   cursor: pointer;
 }
 
-.tree-oddie__node {
-  fill: Canvas;
-  stroke: currentColor;
+.intro__mark {
+  width: min(88vw, 760px);
+  height: auto;
+  overflow: visible;
+}
+
+.intro__word {
+  font-family: 'Pacifico', 'Brush Script MT', cursive;
+  font-size: 230px;
+}
+
+/* Each letter starts as an undrawn outline. */
+.intro__letter {
+  fill: #fbf7ee;
+  fill-opacity: 0;
+  stroke: #fbf7ee;
   stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 1400;
+  stroke-dashoffset: 1400;
 }
 
-.tree-oddie--open .tree-oddie__node {
-  fill: currentColor;
+/* Written one letter after another, each filling in as its outline finishes. */
+.intro--writing .intro__letter {
+  animation:
+    intro-write 0.9s ease-in-out forwards,
+    intro-fill 0.45s ease-out forwards;
+  animation-delay: calc(var(--i) * 0.2s), calc(var(--i) * 0.2s + 0.6s);
 }
 
-.tree .tree-oddie__label {
-  font-size: 15px;
-  font-weight: 600;
+.intro--leaving {
+  pointer-events: none;
+  animation: intro-leave 0.8s cubic-bezier(0.6, 0, 0.9, 0.4) forwards;
 }
 
-.tree-now__node {
-  fill: currentColor;
+@keyframes intro-write {
+  to {
+    stroke-dashoffset: 0;
+  }
 }
 
-.tree .tree-now__label {
-  font-weight: 600;
+@keyframes intro-fill {
+  to {
+    fill-opacity: 1;
+  }
 }
 
-/* ---------- Panels ---------- */
+@keyframes intro-leave {
+  to {
+    transform: scale(7);
+    opacity: 0;
+  }
+}
 
-.panels {
+@media (prefers-reduced-motion: reduce) {
+  .intro {
+    display: none;
+  }
+}
+
+/* ---------- Map page layout ---------- */
+
+.tree-page,
+.intake,
+.not-found {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 24px var(--gutter) 64px;
+}
+
+.tree-page {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
-  gap: 16px;
-  margin-top: 16px;
+  gap: 28px;
 }
 
-.panel {
-  border: 1px solid;
-  padding: 12px;
+.below {
+  display: grid;
+  gap: 28px;
+  align-items: start;
   min-width: 0;
 }
 
+.tree-section__self {
+  color: var(--plum-soft);
+}
+
+.map-section__self,
+.map-section__hint,
+.tree-section__hint {
+  color: var(--plum-soft);
+}
+
+.map-section__hint {
+  margin-top: 12px;
+  text-align: center;
+}
+
+/* ---------- Map ---------- */
+
+/*
+  A 2:3 scene built from layers: meadow, four worlds, foliage, the person.
+  Positions are shares of the map's size, matched to the reference art
+  (temporal/Girl among four colorful worlds.png).
+*/
+.world-map {
+  position: relative;
+  aspect-ratio: 2 / 3;
+  width: min(100%, 520px);
+  margin: 0 auto;
+  border-radius: var(--radius-sheet);
+  overflow: hidden;
+  background: radial-gradient(circle at 50% 52%, var(--grass-center), var(--grass-mid) 55%, var(--grass-edge));
+  box-shadow: 0 6px 16px rgb(40 74 57 / 0.12);
+}
+
+.world-map__layer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  user-select: none;
+}
+
+.world-map__foliage {
+  z-index: 1;
+}
+
+.world {
+  position: absolute;
+  z-index: 2;
+  padding: 0;
+  min-height: 0;
+  border: 0;
+  border-radius: 28%;
+  background: none;
+  color: var(--plum);
+  filter: drop-shadow(0 5px 7px rgb(40 74 57 / 0.16));
+}
+
+.world:hover {
+  background: none;
+}
+
+.world--serenity { left: 1.5%; top: 7.2%; width: 49.5%; }
+.world--midnight { left: 53%; top: 8.4%; width: 45.5%; }
+.world--artist { left: 1%; top: 59.8%; width: 49%; }
+.world--founder { left: 55.5%; top: 62.8%; width: 44%; }
+
+.world__art {
+  display: block;
+  width: 100%;
+  height: auto;
+  user-select: none;
+}
+
+.world--dormant .world__art {
+  filter: saturate(0.3);
+}
+
+/* The world's label is live text over the art, never part of the picture. */
+.world__label {
+  position: absolute;
+  left: 50%;
+  bottom: -3%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: max-content;
+  max-width: 92%; /* stays inside its world, so it never runs off the map */
+  padding: 4px 12px;
+  border-radius: 16px;
+  background: var(--ivory);
+  font-size: 0.74rem;
+  font-weight: 700;
+  line-height: 1.25;
+  text-align: center;
+}
+
+.world__note {
+  font-weight: 600;
+  font-size: 0.72rem;
+}
+
+.world--picked .world__label {
+  background: var(--iris);
+}
+
+.world--open,
+.world:hover {
+  transform: scale(1.02);
+  filter: drop-shadow(0 8px 10px rgb(40 74 57 / 0.26));
+}
+
+.world--open .world__label {
+  outline: 3px solid var(--plum);
+}
+
+.world:focus-visible {
+  box-shadow: none;
+  outline: 4px solid var(--ivory);
+  outline-offset: 0;
+}
+
+.world-map__self {
+  position: absolute;
+  z-index: 3;
+  left: 41.2%;
+  top: 33.5%;
+  width: 17.6%;
+  height: auto;
+  pointer-events: none;
+  user-select: none;
+  filter: drop-shadow(0 4px 4px rgb(40 74 57 / 0.2));
+}
+
+.world-map__now {
+  position: absolute;
+  z-index: 3;
+  left: 50%;
+  top: 62%;
+  transform: translateX(-50%);
+  padding: 3px 12px;
+  border-radius: 999px;
+  background: var(--plum);
+  color: var(--ivory);
+  font-size: 0.75rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* Paths that have no illustrated world yet. */
+.more-paths {
+  margin-top: 20px;
+  text-align: center;
+}
+
+.more-paths__title {
+  font-size: 1.1rem;
+}
+
+.path-chips {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+
+.path-chip {
+  background: var(--ivory);
+  color: var(--plum);
+  border-color: var(--grass-edge);
+}
+
+.path-chip:hover,
+.path-chip--open {
+  background: var(--grass-center);
+  border-color: var(--plum);
+  color: var(--plum);
+}
+
+.path-chip[data-picked='true'] {
+  background: var(--iris);
+}
+
+/* ---------- Panels (sheets) ---------- */
+
+.panels {
+  display: grid;
+  gap: 20px;
+  align-items: start;
+  min-width: 0;
+}
+
+.panel {
+  background: var(--ivory);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sheet);
+  padding: 20px;
+  min-width: 0;
+}
+
+.panel__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 16px;
+}
+
+.panel__title {
+  margin: 0;
+}
+
+/* ---------- The oddie's sheet ---------- */
+
+.oddie-header__text {
+  flex: 1 1 10em;
+  min-width: 0;
+}
+
+.oddie-header__world {
+  margin: 0 0 2px;
+  font-weight: 700;
+  font-size: 0.85rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--plum-soft);
+}
+
+/* The same person in this world's outfit. */
+.oddie-rig {
+  flex: none;
+  width: 96px;
+  height: 106px;
+  border-radius: 24px;
+  background: var(--tone, var(--iris-soft));
+}
+
+.oddie-life {
+  font-size: 1.1rem;
+  margin-top: 14px;
+}
+
+.oddie-interests,
+.oddie-milestones,
 .branch-list,
 .step-list,
 .history-strip,
 .chat-log {
   list-style: none;
   padding: 0;
+  margin: 0;
 }
 
-.branch-list__item,
-.step {
+.oddie-interests {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.oddie-interests__item {
+  background: var(--tone, var(--iris-soft));
+  border-radius: 999px;
+  padding: 3px 14px;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.oddie-milestones__item {
+  position: relative;
+  padding: 4px 0 4px 28px;
+}
+
+.oddie-milestones__item::before {
+  content: '';
+  position: absolute;
+  left: 2px;
+  top: 0.6em;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 3px solid var(--plum);
+  background: var(--ivory);
+}
+
+.oddie-milestones__item--reached::before {
+  background: var(--plum);
+}
+
+.oddie-actions,
+.intake-form__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 16px 0 8px;
+}
+
+/* ---------- Conversation ---------- */
+
+.chat__empty {
+  color: var(--plum-soft);
+}
+
+.chat-log {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 12px 0;
+}
+
+.chat-message {
+  max-width: 92%;
+  padding: 10px 16px 12px;
+  border-radius: 20px;
+}
+
+.chat-message--oddie {
+  align-self: flex-start;
+  background: var(--tone, var(--iris-soft));
+  border-bottom-left-radius: 6px;
+}
+
+.chat-message--user {
+  align-self: flex-end;
+  background: var(--page);
+  border: 1px solid var(--line);
+  border-bottom-right-radius: 6px;
+}
+
+.chat-message__who {
+  display: block;
+  font-weight: 700;
+  font-size: 0.82rem;
+}
+
+.chat-message__text {
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+.chat-form__label {
+  margin-bottom: 6px;
+}
+
+.chat-form__send {
+  margin-top: 8px;
+}
+
+/* ---------- Research sheet: what Nimble found ---------- */
+
+.panel--research {
+  border-top: 14px solid var(--tone, var(--iris));
+}
+
+.research__summary {
+  margin-top: 12px;
+}
+
+.lane__title {
+  margin-bottom: 2px;
+}
+
+.lane__query {
+  color: var(--plum-soft);
+  font-size: 0.9rem;
+  margin-bottom: 4px;
+}
+
+.source-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.source {
+  padding: 10px 0;
+  border-top: 1px solid var(--line);
+}
+
+.source__link {
+  display: inline-block;
+  padding: 6px 0;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.source__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--plum-soft);
+}
+
+.source__badge {
+  background: var(--tone, var(--iris-soft));
+  color: var(--plum);
+  border-radius: 999px;
+  padding: 1px 10px;
+  font-weight: 700;
+}
+
+.source__snippet {
+  margin: 4px 0 0;
+  font-size: 0.92rem;
+  overflow-wrap: anywhere;
+}
+
+.today__research {
+  background: var(--page);
+  border-radius: var(--radius-card);
+  padding: 12px 16px;
+  margin-top: 12px;
+}
+
+.today__research button {
+  margin-top: 8px;
+}
+
+/* ---------- Today ---------- */
+
+.today__date {
+  font-weight: 700;
+  color: var(--plum-soft);
+  margin: 2px 0 8px;
+}
+
+.today__pick {
+  font-family: var(--font-title);
+  font-weight: 600;
+  font-size: 1.15rem;
+}
+
+.branch-list__item {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 4px 12px;
-  padding: 8px 0;
-  border-top: 1px solid;
+  padding: 10px 12px 10px 16px;
+  margin-bottom: 8px;
+  border-radius: var(--radius-card);
+  border-left: 12px solid var(--tone);
+  background: var(--page);
 }
 
-.branch-list__name,
-.chat-message__who {
-  font-weight: 600;
+.branch-list__item--picked {
+  background: var(--tone);
+}
+
+.branch-list__name {
+  font-weight: 700;
+  flex: 1 1 100%;
 }
 
 .branch-list__next {
   flex: 1 1 12em;
+  color: var(--plum-soft);
+}
+
+.branch-list__item--picked .branch-list__next {
+  color: var(--plum);
+}
+
+.branch-list__picked {
+  font-weight: 700;
+}
+
+.branch-list__item--picked .branch-list__choose {
+  background: var(--ivory);
+}
+
+.today__reflect {
+  background: var(--page);
+  border-radius: var(--radius-card);
+  padding: 12px 16px;
+  margin-top: 12px;
+}
+
+/* ---------- Steps ---------- */
+
+.step {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  padding: 12px 0;
+  border-top: 1px solid var(--line);
 }
 
 .step__label {
-  flex: 1 1 14em;
+  flex: 1 1 15em;
   display: flex;
-  gap: 8px;
-  align-items: baseline;
+  gap: 10px;
+  align-items: center;
+  font-weight: 600;
+  min-height: 44px;
+  cursor: pointer;
 }
 
 .step__check {
-  width: auto;
   flex: none;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  accent-color: var(--plum);
 }
 
 .step__type {
   flex: none;
-  border: 1px solid;
-  padding: 0 6px;
+  border-radius: 999px;
+  padding: 2px 12px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  background: var(--iris-soft);
+}
+
+.step--attend .step__type { background: #f6d173; }
+.step--apply .step__type { background: #f4a48d; }
+.step--contact .step__type { background: #bba0e2; }
+.step--practice .step__type { background: var(--grass-center); }
+
+.step--done .step__title {
+  text-decoration: line-through;
+  color: var(--plum-soft);
+}
+
+.step__link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  font-weight: 700;
 }
 
 .step__reader {
   flex: 1 1 100%;
   max-height: 60vh;
   overflow: auto;
-  border: 1px solid;
-  padding: 8px 12px;
+  background: var(--page);
+  border-radius: var(--radius-card);
+  padding: 16px;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
 
-.step--done .step__title {
-  text-decoration: line-through;
+.step__reader--error {
+  background: #fbd9d0;
 }
 
-.step__link,
-.site-header a {
-  display: inline-block;
-  padding: 10px 0;
+.step-list__refresh {
+  margin-top: 12px;
 }
+
+/* ---------- Past days ---------- */
 
 .history-strip {
   display: flex;
@@ -237,52 +1429,405 @@ label {
 }
 
 .history-strip__day {
-  flex: none;
   display: flex;
   flex-direction: column;
-  border: 1px solid;
-  padding: 4px 8px;
+  background: var(--tone);
+  border-radius: var(--radius-card);
+  padding: 8px 14px;
+  line-height: 1.3;
+}
+
+.history-strip__date {
+  font-weight: 700;
+  font-size: 0.82rem;
 }
 
 .history-strip__day--today {
-  border-width: 3px;
+  outline: 3px solid var(--plum);
+  outline-offset: 2px;
 }
 
-.chat-message {
-  padding: 8px 0;
-  border-top: 1px solid;
+/* ---------- Milestone board ---------- */
+
+.tree-section {
+  min-width: 0;
 }
 
-.chat-message__text {
-  margin: 0;
-  white-space: pre-wrap;
+/* A plum board. On phones the tree is drawn compact and fits the screen. On
+   wider screens it is drawn in full. */
+.tree-scroll {
+  background: var(--plum);
+  border-radius: var(--radius-sheet);
+  overflow: hidden;
 }
 
-.oddie-actions,
-.intake-form__actions {
+.tree {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.tree text {
+  fill: var(--ivory);
+  font-family: var(--font-body);
+  font-size: 13.5px;
+  font-weight: 600;
+}
+
+.tree-branch__line {
+  fill: none;
+  stroke: var(--tone);
+  stroke-width: 6;
+  stroke-linecap: round;
+}
+
+.tree-branch--picked .tree-branch__line {
+  stroke-width: 14;
+}
+
+.tree-branch--dormant .tree-branch__line {
+  stroke-dasharray: 2 14;
+}
+
+.tree-milestone,
+.tree-oddie {
+  cursor: pointer;
+}
+
+/* Invisible discs that make milestones and oddies easy to tap. */
+.tree-milestone__hit,
+.tree-oddie__hit {
+  fill: transparent;
+}
+
+.tree-milestone__node {
+  fill: var(--plum);
+  stroke: var(--tone);
+  stroke-width: 4;
+}
+
+/* The next milestone on a path stands out a little. */
+.tree-milestone--next .tree-milestone__node {
+  stroke: var(--ivory);
+}
+
+/* A dotted ring marks a milestone Nimble has researched. */
+.tree-milestone__halo {
+  fill: none;
+  stroke: var(--ivory);
+  stroke-width: 2.5;
+  stroke-dasharray: 1 6;
+  stroke-linecap: round;
+}
+
+.tree .tree-milestone__sources {
+  font-size: 12.5px;
+  font-weight: 700;
+  fill: var(--tone);
+}
+
+.tree-milestone--open .tree-milestone__node,
+.tree-milestone:hover .tree-milestone__node {
+  stroke: var(--ivory);
+  stroke-width: 7;
+}
+
+.tree-milestone:focus-visible {
+  outline: 3px solid var(--ivory);
+  outline-offset: 2px;
+  border-radius: 50%;
+  box-shadow: none;
+}
+
+.tree .tree-branch__next {
+  font-weight: 400;
+}
+
+.tree[data-layout='compact'] text {
+  font-size: 13px;
+}
+
+.tree[data-layout='compact'] .tree-oddie__label {
+  font-size: 15px;
+}
+
+.tree[data-layout='compact'] .tree-now__label {
+  font-size: 13px;
+}
+
+/* What the dots mean. */
+.tree-legend {
+  list-style: none;
+  margin: 12px 0 4px;
+  padding: 0;
   display: flex;
   flex-wrap: wrap;
+  gap: 6px 20px;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.tree-legend__item {
+  display: flex;
+  align-items: center;
   gap: 8px;
-  margin: 8px 0;
+}
+
+.tree-legend__item::before {
+  content: '';
+  flex: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 3px solid var(--plum);
+  background: var(--plum);
+}
+
+.tree-legend__item--unreached::before {
+  background: var(--page);
+}
+
+.tree-legend__item--researched::before {
+  background: var(--page);
+  border-style: dotted;
+}
+
+.tree-milestone--reached .tree-milestone__node {
+  fill: var(--tone);
+  stroke: var(--ivory);
+  stroke-width: 3;
+}
+
+.tree-oddie:focus-visible {
+  outline: 3px solid var(--ivory);
+  outline-offset: 6px;
+  border-radius: 12px;
+  box-shadow: none;
+}
+
+.tree-oddie__node {
+  fill: var(--tone);
+  stroke: var(--ivory);
+  stroke-width: 3;
+}
+
+.tree-oddie:hover .tree-oddie__node,
+.tree-oddie--open .tree-oddie__node {
+  stroke-width: 7;
+}
+
+.tree .tree-oddie__label {
+  font-family: var(--font-title);
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.tree-now__node {
+  fill: var(--ivory);
+}
+
+.tree .tree-now__label {
+  fill: var(--plum);
+  font-family: var(--font-title);
+  font-size: 17px;
 }
 
 /* ---------- Path forms (edit, add, intake drafts) ---------- */
 
+summary {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 4px;
+  cursor: pointer;
+  font-weight: 700;
+  border-radius: 12px;
+}
+
+.path-add {
+  margin-top: 4px;
+}
+
+.path-add[open] {
+  background: var(--ivory);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sheet);
+  padding: 8px 20px 20px;
+  margin-top: 12px;
+  max-width: 720px;
+}
+
 .path-form__field {
-  margin: 8px 0;
+  margin: 14px 0;
 }
 
 .path-form__label {
   display: block;
+  margin-bottom: 4px;
 }
 
-summary {
-  cursor: pointer;
-  padding: 10px 0;
+.path-form__note,
+.drafts__warning {
+  color: var(--plum-soft);
+}
+
+/* ---------- Intake ---------- */
+
+.intake {
+  max-width: 820px;
+}
+
+.intake__lead,
+.drafts__lead {
+  font-size: 1.1rem;
+  max-width: 40em;
+}
+
+.intake-form__label {
+  margin-bottom: 6px;
+}
+
+.drafts {
+  margin-top: 40px;
 }
 
 .draft-card,
 .draft-self {
-  margin: 16px 0;
+  background: var(--ivory);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sheet);
+  padding: 8px 20px 20px;
+  margin: 20px 0;
   min-width: 0;
+}
+
+.draft-card__legend,
+.draft-self__legend {
+  font-family: var(--font-title);
+  font-weight: 600;
+  font-size: 1.15rem;
+  background: #f6d173;
+  border-radius: 999px;
+  padding: 4px 18px;
+}
+
+.draft-self__legend { background: var(--iris); }
+.draft-card:nth-of-type(4n + 2) .draft-card__legend { background: #8198d9; }
+.draft-card:nth-of-type(4n + 3) .draft-card__legend { background: #f4a48d; }
+.draft-card:nth-of-type(4n + 4) .draft-card__legend { background: #bba0e2; }
+
+.drafts-form > .button[type='submit'] {
+  font-size: 1.05rem;
+  padding: 13px 28px;
+}
+
+/* ---------- Not found ---------- */
+
+.not-found {
+  text-align: center;
+  padding-top: 12vh;
+}
+
+/* ---------- Wider screens ---------- */
+
+@media (min-width: 720px) {
+  :root {
+    --gutter: 32px;
+  }
+
+  .site-header__logo {
+    height: 56px;
+  }
+
+  .panel {
+    padding: 28px;
+  }
+
+  .world__label {
+    font-size: 0.85rem;
+  }
+}
+
+/* Under the tree: sheets on the left, the map on the right and staying in view. */
+@media (min-width: 1000px) {
+  .below {
+    grid-template-columns: minmax(0, 1fr) minmax(320px, 420px);
+    column-gap: 40px;
+  }
+
+  .map-section {
+    position: sticky;
+    top: 16px;
+  }
+
+  .world-map {
+    width: min(100%, calc((100vh - 170px) * 2 / 3));
+    min-width: 280px;
+  }
+}
+
+/* ---------- Motion: small, slow, and off when asked ---------- */
+
+@media (prefers-reduced-motion: no-preference) {
+  .button,
+  button,
+  .tree-branch__line,
+  .tree-oddie__node {
+    transition: background-color 0.18s, border-color 0.18s, color 0.18s, stroke-width 0.18s;
+  }
+
+  .world {
+    transition: transform 0.2s ease-out, filter 0.2s ease-out;
+  }
+
+  /* Worlds drift a little, each on its own beat. */
+  .world__art {
+    animation: world-bob 5.6s ease-in-out infinite;
+  }
+
+  .world--midnight .world__art { animation-delay: -1.4s; }
+  .world--artist .world__art { animation-delay: -2.8s; }
+  .world--founder .world__art { animation-delay: -4.2s; }
+
+  /* The person in the middle breathes. */
+  .world-map__self {
+    animation: breathe 3.6s ease-in-out infinite;
+  }
+
+  .panel--chat:not([hidden]),
+  .panel--research:not([hidden]) {
+    animation: sheet-in 0.28s ease-out;
+  }
+
+  /* The dotted research ring turns slowly. */
+  .tree-milestone__halo {
+    animation: halo-turn 14s linear infinite;
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+}
+
+@keyframes halo-turn {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes world-bob {
+  50% {
+    transform: translateY(-1.2%);
+  }
+}
+
+@keyframes breathe {
+  50% {
+    transform: translateY(-0.9%);
+  }
+}
+
+@keyframes sheet-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
 }

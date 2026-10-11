@@ -14,6 +14,10 @@ export const brand = {
   saffron: '#D4A04C',
   navy: '#34455E',
   coral: '#E99D8B',
+  /** From the product brief: completed milestones. */
+  emerald: '#087A51',
+  /** From the product brief: the next milestone. */
+  powder: '#B3D0E6',
 } as const;
 
 export const scene = {
@@ -39,6 +43,7 @@ export const colors = {
   textOnArt: brand.ivory,
   border: '#E8DCCB',
   accent: brand.iris,
+  success: brand.emerald,
   /** "Current" path. */
   pathCurrent: '#4CAF6E',
   /** "Alternate" path. */

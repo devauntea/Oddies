@@ -34,6 +34,7 @@ const NATIVE_DRIVER = Platform.OS !== 'web';
 /** Horizontal place of each milestone, as a share of the width, from the past (bottom) up. */
 const LANES = [0.42, 0.52, 0.4, 0.5];
 const MIN_GAP = 88;
+const COLUMN = 540;
 const HEADER_SPACE = 104;
 const OPEN_MS = 900;
 
@@ -88,7 +89,10 @@ function PathView({ world, path }: { world: SceneWorld; path: WorldPath }) {
   const [pulse] = useState(() => new Animated.Value(0));
   const scroll = useRef<ScrollView>(null);
 
-  const width = Math.min(windowWidth, 540);
+  // The meadow fills the screen; the path, header, companion and card keep to a phone-width
+  // column in the middle on tablets and the web.
+  const width = Math.min(windowWidth, COLUMN);
+  const offsetX = (windowWidth - width) / 2;
   const current = nextGoal(path, progress);
   const focusGoal = current ?? path.goals[path.goals.length - 1];
   const done = completedCount(path, progress);
@@ -108,7 +112,7 @@ function PathView({ world, path }: { world: SceneWorld; path: WorldPath }) {
   const points = new Map<string, Point>(
     path.goals.map((goal, index) => [
       goal.id,
-      { x: (LANES[index % LANES.length] ?? 0.5) * width, y: firstY - index * gap },
+      { x: offsetX + (LANES[index % LANES.length] ?? 0.5) * width, y: firstY - index * gap },
     ]),
   );
 
@@ -187,14 +191,14 @@ function PathView({ world, path }: { world: SceneWorld; path: WorldPath }) {
         onLayout={onViewport}
         showsVerticalScrollIndicator={false}
       >
-        <Animated.View style={[{ width, height: contentHeight }, zoomStyle]}>
+        <Animated.View style={[{ width: windowWidth, height: contentHeight }, zoomStyle]}>
           <Image
             source={PATH_BACKGROUNDS[world.id]}
             style={StyleSheet.absoluteFill}
             resizeMode="cover"
           />
           <Animated.View style={[StyleSheet.absoluteFill, styles.passThrough, trailStyle]}>
-            <Svg width={width} height={contentHeight}>
+            <Svg width={windowWidth} height={contentHeight}>
               {connections(path).map(({ from, to }) => {
                 const a = points.get(from.id);
                 const b = points.get(to.id);
@@ -282,7 +286,7 @@ function PathView({ world, path }: { world: SceneWorld; path: WorldPath }) {
                     {
                       left: labelLeft,
                       top: point.y - 24,
-                      maxWidth: width - labelLeft - spacing.md,
+                      maxWidth: offsetX + width - labelLeft - spacing.md,
                     },
                   ]}
                 >
@@ -296,7 +300,12 @@ function PathView({ world, path }: { world: SceneWorld; path: WorldPath }) {
         </Animated.View>
       </ScrollView>
 
-      <View style={[styles.header, { top: insets.top + spacing.sm }]}>
+      <View
+        style={[
+          styles.header,
+          { top: insets.top + spacing.sm, left: offsetX + spacing.md, right: offsetX + spacing.md },
+        ]}
+      >
         <Pressable
           onPress={goBack}
           accessibilityRole="button"
@@ -324,6 +333,7 @@ function PathView({ world, path }: { world: SceneWorld; path: WorldPath }) {
           world={world}
           speech={current ? path.speech : 'Look at how far you came.'}
           width={companionWidth}
+          inset={offsetX}
           bottom={cardHeight - spacing.lg}
           onPress={() => setTalking(true)}
         />
@@ -491,6 +501,9 @@ const styles = StyleSheet.create({
     color: colors.text,
   },
   card: {
+    width: '100%',
+    maxWidth: COLUMN,
+    alignSelf: 'center',
     paddingTop: spacing.lg,
     paddingHorizontal: spacing.lg,
     borderTopLeftRadius: radius.sheet,

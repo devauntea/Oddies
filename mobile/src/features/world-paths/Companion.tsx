@@ -21,6 +21,8 @@ type Props = {
   width: number;
   /** Distance from the bottom of the screen to the crop line (just inside the action card). */
   bottom: number;
+  /** Side margin of the centered column on wide screens. */
+  inset?: number;
   onPress: () => void;
 };
 
@@ -30,7 +32,7 @@ type Props = {
  * opens, breathes at the personality's pace, and the bubble pops whenever its words change.
  * Tapping either opens the conversation.
  */
-export function Companion({ world, speech, width, bottom, onPress }: Props) {
+export function Companion({ world, speech, width, bottom, inset = 0, onPress }: Props) {
   const reduceMotion = useReducedMotion();
   const [enter] = useState(() => new Animated.Value(0));
   const [pop] = useState(() => new Animated.Value(0));
@@ -106,7 +108,12 @@ export function Companion({ world, speech, width, bottom, onPress }: Props) {
   };
 
   return (
-    <View style={[styles.root, { bottom, height: visible }]}>
+    <View
+      style={[
+        styles.root,
+        { bottom, height: visible, left: inset + spacing.md, right: inset + spacing.md },
+      ]}
+    >
       <Animated.View style={slideMotion}>
         <Pressable
           onPress={onPress}
@@ -137,8 +144,6 @@ export function Companion({ world, speech, width, bottom, onPress }: Props) {
 const styles = StyleSheet.create({
   root: {
     position: 'absolute',
-    left: spacing.md,
-    right: spacing.md,
     pointerEvents: 'box-none',
   },
   bubble: {

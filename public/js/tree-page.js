@@ -8,6 +8,7 @@ import { createPathFields } from './path-form.js';
 import { renderMap } from './map.js';
 import { worldFor } from './worlds.js';
 import { mountRig } from './rig.js';
+import { initResearch } from './research-panel.js';
 
 const $ = (selector) => document.querySelector(selector);
 
@@ -37,10 +38,17 @@ const els = {
 };
 
 const chat = initChat(els.panel);
-const today = initToday($('[data-panel="today"]'), {
+const research = initResearch($('[data-panel="research"]'), {
   refresh: () => refresh(),
   onError: (error) => setNotice(els.notice, error.message),
 });
+const today = initToday($('[data-panel="today"]'), {
+  refresh: () => refresh(),
+  onError: (error) => setNotice(els.notice, error.message),
+  onShowSources: (oddie, milestone) => milestone && research.open(oddie, milestone),
+});
+// Phones get the compact tree that fits the screen.
+const phone = window.matchMedia('(max-width: 719px)');
 const editFields = createPathFields($('[data-role="path-edit-fields"]'));
 const addFields = createPathFields($('[data-role="path-add-fields"]'));
 addFields.clear();
@@ -108,7 +116,14 @@ function render() {
   const count = state.oddies.length;
   els.selfLine.textContent = `${state.self.name}, in ${state.self.city}. ${count} ${count === 1 ? 'path' : 'paths'} open, none of them closed.`;
   renderMap(els.map, els.morePaths, state, { openOddieId, onOddieSelect: selectOddie });
-  renderTree(els.tree, state, { openOddieId, onOddieSelect: selectOddie });
+  renderTree(els.tree, state, {
+    compact: phone.matches,
+    openOddieId,
+    openMilestoneId: research.openMilestoneId,
+    onOddieSelect: selectOddie,
+    onMilestoneSelect: selectMilestone,
+  });
+  research.render(state);
   renderPanel();
   today.render(state);
 }
@@ -129,6 +144,12 @@ function selectOddie(oddie) {
   if (changed) chat.open(oddie);
   els.name.focus();
   els.panel.scrollIntoView({ block: 'nearest' });
+}
+
+function selectMilestone(oddie, milestone) {
+  research.open(oddie, milestone);
+  // Redraw so the tree shows which milestone is open.
+  render();
 }
 
 function closePanel() {
@@ -157,6 +178,8 @@ async function act(work, done) {
 }
 
 els.close.addEventListener('click', closePanel);
+phone.addEventListener('change', () => state && render());
+$('[data-action="research-close"]').addEventListener('click', () => state && render());
 
 els.toggleStatus.addEventListener('click', () => {
   const oddie = openOddie();

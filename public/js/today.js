@@ -3,8 +3,9 @@
 import { api, setNotice } from './api.js';
 import { formatDate } from './tree.js';
 import { worldFor } from './worlds.js';
+import { LANE_LABELS } from './research-panel.js';
 
-export function initToday(panel, { refresh, onError }) {
+export function initToday(panel, { refresh, onError, onShowSources = () => {} }) {
   const $ = (selector) => panel.querySelector(selector);
   const els = {
     date: $('[data-role="today-date"]'),
@@ -18,6 +19,9 @@ export function initToday(panel, { refresh, onError }) {
     steps: $('[data-role="step-list"]'),
     refreshSteps: $('[data-action="today-refresh"]'),
     reflect: $('[data-role="today-reflect"]'),
+    research: $('[data-role="today-research"]'),
+    researchText: $('[data-role="today-research-text"]'),
+    showSources: $('[data-action="today-sources"]'),
     history: $('[data-role="history-strip"]'),
   };
 
@@ -120,6 +124,16 @@ export function initToday(panel, { refresh, onError }) {
     const has = state.today_steps.length > 0;
     els.refreshSteps.hidden = !has;
     els.reflect.hidden = !has;
+
+    // Where these steps came from: the research on the milestone they belong to.
+    const milestoneId = has ? state.today_steps[0].milestone_id : null;
+    const research = oddie && (oddie.research || []).find((r) => r.milestone_id === milestoneId);
+    els.research.hidden = !research;
+    if (research) {
+      const lanes = research.lanes.map((lane) => `${(LANE_LABELS[lane.lane] || lane.lane).toLowerCase()} (${lane.count})`).join(', ');
+      els.researchText.textContent = `Picked from ${research.sources.length} pages Nimble found: ${lanes}. `;
+      els.showSources.onclick = () => onShowSources(oddie, oddie.milestones.find((m) => m.id === milestoneId));
+    }
     els.refreshSteps.disabled = busy;
     els.stepEmpty.hidden = has;
     els.stepEmpty.textContent = oddie

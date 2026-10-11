@@ -1,6 +1,6 @@
 # Oddies
 
-One you, many possibilities. Oddies draws the lives you could still live as worlds on a map, with you in the middle. Each world is home to an oddie: a version of you who lived that life. You can talk to any oddie, and each day you pick one path. Oddies then searches the live web for real things you can do today toward it. Under the map, a board shows every path milestone by milestone.
+One you, many possibilities. Oddies draws the lives you could still live as a tree: you today on the left, one path per life, milestones along each path, and at the end an oddie, the version of you who lived that life. You can talk to any oddie. Tap a milestone and Nimble researches it on the live web: every page it finds is kept and linked, and a few become steps you can do today. Under the tree, an illustrated map shows each oddie's world.
 
 Built for AI Engineer NYC 2026.
 
@@ -79,7 +79,7 @@ Without the secret the workflow still runs the tests and prints a warning instea
 
 | Route | What it does |
 | --- | --- |
-| `GET /api/state` | self, oddies with milestones, today's pick, today's steps, past picks |
+| `GET /api/state` | self, oddies with milestones and research, today's pick, today's steps, past picks |
 | `POST /api/intake` | `{ text }` in, 4 to 6 draft oddies out. Saves nothing |
 | `POST /api/oddies` | `{ self, oddies }`. Saves the drafts and replaces the current set |
 | `POST /api/oddies/add` | Adds one path to the current set |
@@ -88,6 +88,7 @@ Without the secret the workflow still runs the tests and prints a warning instea
 | `GET /api/oddies/:id/chat` | That oddie's saved conversation |
 | `POST /api/oddies/:id/chat` | `{ text }` in, the oddie's reply out |
 | `POST /api/today` | `{ oddie_id, refresh? }`. Records the pick, returns 3 to 5 steps |
+| `POST /api/research` | `{ oddie_id }`. Researches that path's next milestone without changing today's pick |
 | `PATCH /api/steps/:id` | `{ done }`. Two done steps on a milestone mark it reached |
 | `POST /api/steps/:id/read` | That step's page as markdown, through Nimble Extract |
 | `POST /api/demo/reset` | Wipes the database and reloads the demo |
@@ -101,6 +102,8 @@ Errors are `{ error, message }` with a real status code.
 3. Gemini picks 3 to 5 steps from those results only.
 4. The server drops any step whose URL Nimble did not return (`keepRealSteps` in `src/today.js`).
 5. If Nimble fails or times out, the API returns an error and the page shows it with a Try again button. There is no fallback to made-up steps.
+
+Every page Nimble returns is saved in the `source` table with its lane, the query that found it, and its link, not only the few that become steps. `GET /api/state` returns it as `oddie.research`, one entry per researched milestone. The tree rings those milestones and the research sheet lists every source.
 
 If Gemini is the part that fails, fixed lane rules write the queries or pick the steps instead, still only from Nimble results. So Today keeps working with just a Nimble key.
 
@@ -140,7 +143,9 @@ Built from `temporal/`: the playbook (`style.md`), the layered map art, and the 
 - **The character:** `public/js/rig.js` draws the same person in the world's outfit at the top of the conversation sheet, with a blink. The art is generated into `public/js/rig-art.js` from `temporal/preview.html`.
 - **Web images:** `public/img/map/*.webp` are cropped, resized copies of the PNGs in `temporal/` (about 540 KB in all, against 10 MB of source).
 - **Logo:** `public/img/logo.webp` is the green wordmark artwork. The playbook's default is plum on ivory; that version was not supplied.
-- **Motion:** worlds drift a few pixels, the person breathes, the sheet fades in. All of it is off under Reduce Motion.
+- **The tree leads.** It is the first thing on the page. On phones it is drawn in a compact layout that fits the screen (`TREE_SPACING_COMPACT` in `public/js/tree.js`); from 720px up it is drawn in full (`TREE_SPACING`).
+- **Opening on the home page:** "Oddies" is written in cursive, then the view moves through it into the page. Once per tab, skipped by any tap or key (`public/js/home.js`, "Home: the opening" in the CSS).
+- **Motion:** worlds drift a few pixels, the person breathes, sheets fade in, the research ring turns slowly. All of it is off under Reduce Motion.
 
 Not built from the playbook yet: voice input, saving memories, a story view, and the walk-into-a-world transition.
 
@@ -156,7 +161,7 @@ Everything visual is yours to replace. Three rules keep the logic working:
 
 | File | URL | Body hook |
 | --- | --- | --- |
-| `public/index.html` | `/` | `body.page--home[data-page="home"]` |
+| `public/index.html` | `/` | `body.page--home[data-page="home"]`. The opening is `div.intro[data-role="intro"]` with `.intro__mark`, `.intro__word`, `.intro__letter` |
 | `public/intake.html` | `/intake` | `body.page--intake[data-page="intake"]` |
 | `public/tree.html` | `/tree` | `body.page--tree[data-page="tree"]` |
 | `public/404.html` | any unknown URL | `body.page--not-found` |
@@ -197,17 +202,20 @@ In the HTML: `.path-form`, `.path-form__fields`, `.path-form__note`, `.path-form
 
 Around it: `.map-section`, `.map-section__title`, `.map-section__self`, `.map-section__hint`.
 
-### tree.html: the milestone board
+### tree.html: the tree
 
-An SVG drawn by `public/js/tree.js`. **All spacing is in one place:** the `TREE_SPACING` object and the `layoutTree()` function at the top of that file. Change numbers there to move things. The SVG scales to its container and scrolls sideways inside `.tree-scroll` on small screens (`min-width` on `.tree` in the CSS sets how small it may get).
+An SVG drawn by `public/js/tree.js`. **All spacing is in one place:** the `TREE_SPACING` (wide) and `TREE_SPACING_COMPACT` (phone) objects and the `layoutTree()` function at the top of that file. Change numbers there to move things. The SVG has `data-layout="wide"` or `"compact"`.
 
 | Element | Class | State classes and attributes |
 | --- | --- | --- |
 | The SVG | `.tree` | |
 | One branch (group) | `.tree-branch` | `.tree-branch--active` or `.tree-branch--dormant`, `.tree-branch--picked` for today's pick. `data-oddie-id`, `data-status`, `data-picked`, `data-world` |
 | Branch line | `.tree-branch__line` | |
-| Milestone (group) | `.tree-milestone` | `.tree-milestone--reached` or `.tree-milestone--unreached`. `data-milestone-id`, `data-reached` |
+| Milestone (group, a button) | `.tree-milestone` | `.tree-milestone--reached` or `--unreached`, `--next` for the path's next milestone, `--researched` when Nimble has results for it, `--open` while its research sheet is open. `data-milestone-id`, `data-reached`, `data-next`, `data-researched`, `data-sources` |
 | Milestone dot, label | `.tree-milestone__node`, `.tree-milestone__label` | |
+| Research ring, source count | `.tree-milestone__halo`, `.tree-milestone__sources` | |
+| "Next: ..." line (phone layout) | `.tree-branch__next` | |
+| Tap areas | `.tree-milestone__hit`, `.tree-oddie__hit` | |
 | Oddie (group, clickable) | `.tree-oddie` | `.tree-oddie--open` while its panel is open. `data-oddie-id`, `data-open` |
 | Oddie dot, name, years | `.tree-oddie__node`, `.tree-oddie__label`, `.tree-oddie__horizon` | |
 | Now node | `.tree-now`, `.tree-now__node`, `.tree-now__label`, `.tree-now__date` | |
@@ -224,6 +232,17 @@ Written by JS: `.oddie-interests__item`; `.oddie-milestones__item` with `--reach
 
 Hooks: `data-role` = `chat-name`, `chat-life`, `chat-interests`, `chat-milestones`, `chat-empty`, `chat-log`, `chat-status`, `chat-error`, `chat-form`, `chat-input`, `path-edit`, `path-edit-form`, `path-edit-fields`, `path-edit-error`. `data-action` = `chat-close`, `chat-send`, `oddie-toggle-status`, `oddie-delete`, `path-edit-save`.
 
+### tree.html: research sheet
+
+`section.panel.panel--research[data-panel="research"]`. Opens when a milestone is chosen. Gets `data-world`, `data-oddie-id`, `data-milestone-id`, `data-researched`.
+
+In the HTML: `.research__summary`, `.research__run`, `.research__lanes`.
+Written by JS (`public/js/research-panel.js`): `section.lane.lane--{lane}[data-lane]` with `.lane__title`, `.lane__query` and `ul.source-list`; `li.source.source--{kind}` (`--step` when it was picked as a step; `data-source-id`, `data-kind`, `data-step`) with `.source__link`, `.source__meta`, `.source__host`, `.source__badge`, `.source__snippet`.
+
+Hooks: `data-role` = `research-world`, `research-title`, `research-summary`, `research-status`, `research-error`, `research-lanes`. `data-action` = `research-run`, `research-close`.
+
+Under the tree: `ul.tree-legend` with `.tree-legend__item--reached`, `--unreached`, `--researched`.
+
 ### tree.html: Today panel
 
 `section.panel.panel--today[data-panel="today"]`. Gets `data-busy="true"` and `aria-busy` while searching.
@@ -236,7 +255,7 @@ Written by JS (`public/js/today.js`):
 - `li.step.step--{type}` (`--done` when ticked; `data-step-id`, `data-step-type`, `data-done`) with `.step__label`, `.step__check`, `.step__type`, `.step__title`, `.step__link`. Type is `read`, `attend`, `apply`, `contact` or `practice`. Read and practice steps also get `.step__read` (the Read here button) and, when open, `.step__reader.step__reader--loading`, `--ready` or `--error` (`data-role="step-reader"`, `data-status`).
 - `li.history-strip__day` (`--today` on today; `data-date`, `data-oddie-id`, `data-today`) with `.history-strip__date`, `.history-strip__oddie`.
 
-Hooks: `data-role` = `today-date`, `today-pick`, `branch-list`, `today-status`, `today-error`, `today-error-text`, `step-empty`, `step-list`, `today-reflect`, `history-strip`. `data-action` = `choose-today`, `today-retry`, `today-refresh`, `toggle-step`, `read-step`.
+Hooks: `data-role` = `today-date`, `today-pick`, `branch-list`, `today-status`, `today-error`, `today-error-text`, `step-empty`, `step-list`, `today-research`, `today-research-text`, `today-reflect`, `history-strip`. `data-action` = `choose-today`, `today-retry`, `today-refresh`, `toggle-step`, `read-step`, `today-sources`.
 
 Other hooks on the tree page: `data-action="demo-reset"`, `data-role` = `path-add`, `path-add-form`, `path-add-fields`, `path-add-error`, `data-action="path-add-save"`.
 

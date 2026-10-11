@@ -127,6 +127,15 @@ function refineKind(kind, url, source) {
   return kind;
 }
 
+// Search text can carry markdown marks (#, *, backticks, link syntax). Plain words only.
+function plain(text) {
+  return String(text || '')
+    .replace(/!?\[([^\]]*)\]\([^)]*\)/g, '$1')
+    .replace(/[#*_`>|]{1,}/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
 function truncate(text, max) {
   return text.length <= max ? text : `${text.slice(0, max - 1).trimEnd()}…`;
 }
@@ -142,9 +151,9 @@ function toResource(raw, lane) {
     url: String(raw.url).trim(),
     lane,
     kind: refineKind(LANES[lane].kind, key, source),
-    title: String(raw.title || '').trim() || source,
+    title: plain(raw.title) || source,
     source,
-    snippet: truncate(String(raw.snippet || raw.description || '').replace(/\s+/g, ' ').trim(), MAX_DESCRIPTION),
+    snippet: truncate(plain(raw.snippet || raw.description), MAX_DESCRIPTION),
   };
 }
 

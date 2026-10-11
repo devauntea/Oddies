@@ -325,6 +325,93 @@ textarea {
   box-shadow: 0 6px 16px rgb(40 74 57 / 0.12);
 }
 
+/* ---------- Home: the opening ---------- */
+
+/* A green screen, the logo's green, where "Oddies" is written in cursive.
+   Then it grows past the viewer and the page settles in behind it. */
+.intro {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  display: grid;
+  place-items: center;
+  background: #087e49;
+  cursor: pointer;
+}
+
+.intro__mark {
+  width: min(88vw, 760px);
+  height: auto;
+  overflow: visible;
+}
+
+.intro__word {
+  font-family: 'Pacifico', 'Brush Script MT', cursive;
+  font-size: 230px;
+}
+
+/* Each letter starts as an undrawn outline. */
+.intro__letter {
+  fill: #fbf7ee;
+  fill-opacity: 0;
+  stroke: #fbf7ee;
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 1400;
+  stroke-dashoffset: 1400;
+}
+
+/* Written one letter after another, each filling in as its outline finishes. */
+.intro--writing .intro__letter {
+  animation:
+    intro-write 0.9s ease-in-out forwards,
+    intro-fill 0.45s ease-out forwards;
+  animation-delay: calc(var(--i) * 0.2s), calc(var(--i) * 0.2s + 0.6s);
+}
+
+.intro--leaving {
+  pointer-events: none;
+  animation: intro-leave 0.8s cubic-bezier(0.6, 0, 0.9, 0.4) forwards;
+}
+
+/* The page arrives from slightly far away, as if you moved into it. */
+.page--arriving .home {
+  animation: home-arrive 0.8s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+@keyframes intro-write {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes intro-fill {
+  to {
+    fill-opacity: 1;
+  }
+}
+
+@keyframes intro-leave {
+  to {
+    transform: scale(7);
+    opacity: 0;
+  }
+}
+
+@keyframes home-arrive {
+  from {
+    transform: scale(0.86);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .intro {
+    display: none;
+  }
+}
+
 /* ---------- Map page layout ---------- */
 
 .tree-page,
@@ -338,7 +425,17 @@ textarea {
 .tree-page {
   display: grid;
   gap: 28px;
+}
+
+.below {
+  display: grid;
+  gap: 28px;
   align-items: start;
+  min-width: 0;
+}
+
+.tree-section__self {
+  color: var(--plum-soft);
 }
 
 .map-section__self,
@@ -687,6 +784,79 @@ textarea {
   margin-top: 8px;
 }
 
+/* ---------- Research sheet: what Nimble found ---------- */
+
+.panel--research {
+  border-top: 14px solid var(--tone, var(--iris));
+}
+
+.research__summary {
+  margin-top: 12px;
+}
+
+.lane__title {
+  margin-bottom: 2px;
+}
+
+.lane__query {
+  color: var(--plum-soft);
+  font-size: 0.9rem;
+  margin-bottom: 4px;
+}
+
+.source-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.source {
+  padding: 10px 0;
+  border-top: 1px solid var(--line);
+}
+
+.source__link {
+  display: inline-block;
+  padding: 6px 0;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.source__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--plum-soft);
+}
+
+.source__badge {
+  background: var(--tone, var(--iris-soft));
+  color: var(--plum);
+  border-radius: 999px;
+  padding: 1px 10px;
+  font-weight: 700;
+}
+
+.source__snippet {
+  margin: 4px 0 0;
+  font-size: 0.92rem;
+  overflow-wrap: anywhere;
+}
+
+.today__research {
+  background: var(--page);
+  border-radius: var(--radius-card);
+  padding: 12px 16px;
+  margin-top: 12px;
+}
+
+.today__research button {
+  margin-top: 8px;
+}
+
 /* ---------- Today ---------- */
 
 .today__date {
@@ -853,22 +1023,17 @@ textarea {
   min-width: 0;
 }
 
-/* A plum board. The board keeps a readable size and scrolls sideways on
-   small screens. */
+/* A plum board. On phones the tree is drawn compact and fits the screen. On
+   wider screens it is drawn in full. */
 .tree-scroll {
-  overflow-x: auto;
   background: var(--plum);
   border-radius: var(--radius-sheet);
-}
-
-.tree-scroll:focus-visible {
-  box-shadow: 0 0 0 7px var(--iris);
+  overflow: hidden;
 }
 
 .tree {
   display: block;
   width: 100%;
-  min-width: 1100px;
   height: auto;
 }
 
@@ -894,20 +1059,113 @@ textarea {
   stroke-dasharray: 2 14;
 }
 
+.tree-milestone,
+.tree-oddie {
+  cursor: pointer;
+}
+
+/* Invisible discs that make milestones and oddies easy to tap. */
+.tree-milestone__hit,
+.tree-oddie__hit {
+  fill: transparent;
+}
+
 .tree-milestone__node {
   fill: var(--plum);
   stroke: var(--tone);
   stroke-width: 4;
 }
 
+/* The next milestone on a path stands out a little. */
+.tree-milestone--next .tree-milestone__node {
+  stroke: var(--ivory);
+}
+
+/* A dotted ring marks a milestone Nimble has researched. */
+.tree-milestone__halo {
+  fill: none;
+  stroke: var(--ivory);
+  stroke-width: 2.5;
+  stroke-dasharray: 1 6;
+  stroke-linecap: round;
+}
+
+.tree .tree-milestone__sources {
+  font-size: 12.5px;
+  font-weight: 700;
+  fill: var(--tone);
+}
+
+.tree-milestone--open .tree-milestone__node,
+.tree-milestone:hover .tree-milestone__node {
+  stroke: var(--ivory);
+  stroke-width: 7;
+}
+
+.tree-milestone:focus-visible {
+  outline: 3px solid var(--ivory);
+  outline-offset: 2px;
+  border-radius: 50%;
+  box-shadow: none;
+}
+
+.tree .tree-branch__next {
+  font-weight: 400;
+}
+
+.tree[data-layout='compact'] text {
+  font-size: 13px;
+}
+
+.tree[data-layout='compact'] .tree-oddie__label {
+  font-size: 15px;
+}
+
+.tree[data-layout='compact'] .tree-now__label {
+  font-size: 13px;
+}
+
+/* What the dots mean. */
+.tree-legend {
+  list-style: none;
+  margin: 12px 0 4px;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 20px;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.tree-legend__item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tree-legend__item::before {
+  content: '';
+  flex: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 3px solid var(--plum);
+  background: var(--plum);
+}
+
+.tree-legend__item--unreached::before {
+  background: var(--page);
+}
+
+.tree-legend__item--researched::before {
+  background: var(--page);
+  border-style: dotted;
+}
+
 .tree-milestone--reached .tree-milestone__node {
   fill: var(--tone);
   stroke: var(--ivory);
   stroke-width: 3;
-}
-
-.tree-oddie {
-  cursor: pointer;
 }
 
 .tree-oddie:focus-visible {
@@ -1065,10 +1323,10 @@ summary {
   }
 }
 
-/* Map on the left and staying in view, sheets on the right. */
+/* Under the tree: sheets on the left, the map on the right and staying in view. */
 @media (min-width: 1000px) {
-  .tree-page {
-    grid-template-columns: minmax(360px, 480px) minmax(0, 1fr);
+  .below {
+    grid-template-columns: minmax(0, 1fr) minmax(320px, 420px);
     column-gap: 40px;
   }
 
@@ -1078,12 +1336,8 @@ summary {
   }
 
   .world-map {
-    width: min(100%, calc((100vh - 230px) * 2 / 3));
-    min-width: 300px;
-  }
-
-  .tree-section {
-    grid-column: 1 / -1;
+    width: min(100%, calc((100vh - 170px) * 2 / 3));
+    min-width: 280px;
   }
 }
 
@@ -1115,8 +1369,22 @@ summary {
     animation: breathe 3.6s ease-in-out infinite;
   }
 
-  .panel--chat:not([hidden]) {
+  .panel--chat:not([hidden]),
+  .panel--research:not([hidden]) {
     animation: sheet-in 0.28s ease-out;
+  }
+
+  /* The dotted research ring turns slowly. */
+  .tree-milestone__halo {
+    animation: halo-turn 14s linear infinite;
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+}
+
+@keyframes halo-turn {
+  to {
+    transform: rotate(360deg);
   }
 }
 

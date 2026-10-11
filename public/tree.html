@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Your map | Oddies</title>
+    <title>Your paths | Oddies</title>
     <meta name="description" content="One you, many possibilities. Visit the worlds where other versions of you live, talk to them, and pick one path to work on today.">
     <link rel="icon" href="/img/logo.webp">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -26,20 +26,48 @@
     <p class="notice" data-role="notice" role="status" hidden></p>
 
     <main class="tree-page">
-      <section class="map-section" aria-labelledby="map-heading">
-        <h1 class="map-section__title" id="map-heading">One you, many possibilities</h1>
-        <p class="map-section__self" data-role="self-line"></p>
+      <section class="tree-section" aria-labelledby="tree-heading">
+        <h1 class="tree-section__title" id="tree-heading">One you, many possibilities</h1>
+        <p class="tree-section__self" data-role="self-line"></p>
 
-        <div class="world-map" data-role="world-map"></div>
-        <p class="map-section__hint">Tap a world to meet the you who lives there.</p>
-
-        <div class="more-paths" data-role="more-paths" hidden>
-          <h2 class="more-paths__title">More paths</h2>
-          <ul class="path-chips" data-role="path-chips"></ul>
+        <div class="tree-scroll" data-role="tree-scroll">
+          <svg class="tree" data-role="tree" role="group" xmlns="http://www.w3.org/2000/svg"></svg>
         </div>
+
+        <ul class="tree-legend" aria-label="What the dots mean">
+          <li class="tree-legend__item tree-legend__item--reached">Reached</li>
+          <li class="tree-legend__item tree-legend__item--unreached">Not yet</li>
+          <li class="tree-legend__item tree-legend__item--researched">Researched by Nimble</li>
+        </ul>
+        <p class="tree-section__hint">Tap a milestone to see what Nimble found for it. Tap the end of a path to talk to that you.</p>
+
+      <details class="path-add" data-role="path-add">
+        <summary class="path-add__summary">Add a path</summary>
+        <form class="path-form" data-role="path-add-form">
+          <div class="path-form__fields" data-role="path-add-fields"></div>
+          <p class="panel__error" data-role="path-add-error" role="alert" hidden></p>
+          <button type="submit" class="path-form__save" data-action="path-add-save">Add this path</button>
+        </form>
+      </details>
       </section>
 
-      <div class="panels">
+      <div class="below">
+        <div class="panels">
+          <section class="panel panel--research" data-panel="research" aria-labelledby="research-heading" hidden>
+            <header class="panel__header">
+              <div class="oddie-header__text">
+                <p class="oddie-header__world" data-role="research-world"></p>
+                <h2 class="panel__title" id="research-heading" data-role="research-title" tabindex="-1"></h2>
+              </div>
+              <button type="button" class="panel__close" data-action="research-close">Close</button>
+            </header>
+            <p class="research__summary" data-role="research-summary"></p>
+            <button type="button" class="research__run" data-action="research-run"></button>
+            <p class="today__status" data-role="research-status" role="status" hidden></p>
+            <p class="panel__error" data-role="research-error" role="alert" hidden></p>
+            <div class="research__lanes" data-role="research-lanes"></div>
+          </section>
+
         <aside class="panel panel--chat" data-panel="chat" aria-labelledby="chat-heading" hidden>
           <header class="panel__header oddie-header">
             <svg class="oddie-rig" data-role="chat-rig" role="img" aria-label="This version of you" xmlns="http://www.w3.org/2000/svg"></svg>
@@ -96,30 +124,29 @@
           <h3 class="step-list__title">Steps</h3>
           <p class="step-list__empty" data-role="step-empty"></p>
           <ul class="step-list" data-role="step-list"></ul>
+          <p class="today__research" data-role="today-research" hidden>
+            <span data-role="today-research-text"></span>
+            <button type="button" class="step__read" data-action="today-sources">See every source</button>
+          </p>
           <p class="today__reflect" data-role="today-reflect" hidden>End of day check-in: rate your energy and engagement from 1 to 5, and write one sentence about what surprised you.</p>
           <button type="button" class="step-list__refresh" data-action="today-refresh" hidden>Find different steps</button>
 
           <h3 class="history-strip__title">Past days</h3>
           <ol class="history-strip" data-role="history-strip"></ol>
         </section>
-      </div>
-
-      <section class="tree-section" aria-labelledby="tree-heading">
-        <h2 class="tree-section__title" id="tree-heading">Every path, milestone by milestone</h2>
-        <div class="tree-scroll" data-role="tree-scroll" role="region" aria-label="Paths and milestones, scrolls sideways" tabindex="0">
-          <svg class="tree" data-role="tree" role="group" xmlns="http://www.w3.org/2000/svg"></svg>
         </div>
-        <p class="tree-section__hint">Finish two steps toward a milestone and it lights up.</p>
 
-        <details class="path-add" data-role="path-add">
-          <summary class="path-add__summary">Add a path</summary>
-          <form class="path-form" data-role="path-add-form">
-            <div class="path-form__fields" data-role="path-add-fields"></div>
-            <p class="panel__error" data-role="path-add-error" role="alert" hidden></p>
-            <button type="submit" class="path-form__save" data-action="path-add-save">Add this path</button>
-          </form>
-        </details>
-      </section>
+        <section class="map-section" aria-labelledby="map-heading">
+          <h2 class="map-section__title" id="map-heading">Your worlds</h2>
+          <div class="world-map" data-role="world-map"></div>
+          <p class="map-section__hint">Tap a world to meet the you who lives there.</p>
+
+          <div class="more-paths" data-role="more-paths" hidden>
+            <h3 class="more-paths__title">More paths</h3>
+            <ul class="path-chips" data-role="path-chips"></ul>
+          </div>
+        </section>
+      </div>
     </main>
 
     <script type="module" src="/js/tree-page.js"></script>

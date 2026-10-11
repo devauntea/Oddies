@@ -24,6 +24,11 @@ body {
   display: none !important;
 }
 
+/* Links use the text color so they stay readable in light and dark. */
+a {
+  color: inherit;
+}
+
 .button,
 button {
   font: inherit;
@@ -217,8 +222,8 @@ label {
 
 .history-strip {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
-  overflow-x: auto;
 }
 
 .history-strip__day {

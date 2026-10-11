@@ -14,13 +14,13 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { researchHref } from '@/features/research';
+import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { colors, radius, spacing, typography } from '@/theme/tokens';
 
 import { breathSecondsFor, findWorld, sceneLayout } from './layout';
 import { layerRect, positionOf, rectCenter, waveRange } from './math';
 import { LAYER_SOURCES, PORTRAIT_SOURCES } from './sources';
 import type { SceneLayer, SceneWorld, Size } from './types';
-import { useReducedMotion } from './useReducedMotion';
 
 const { canvas, motion } = sceneLayout;
 const NATIVE_DRIVER = Platform.OS !== 'web';

@@ -39,6 +39,7 @@ export function WorldMapScreen() {
   const openWorld = useCallback((id: WorldId) => {
     router.push({ pathname: '/world/[id]', params: { id } });
   }, []);
+  const openYou = useCallback(() => router.push('/you'), []);
 
   const placement = size ? placeMap(size, insets.top, insets.bottom) : null;
 
@@ -49,6 +50,7 @@ export function WorldMapScreen() {
         <WorldMap
           scale={placement.scale}
           onEnterWorld={openWorld}
+          onPressSelf={openYou}
           style={[styles.map, { left: placement.left, top: placement.top }]}
         />
       ) : null}
@@ -76,8 +78,11 @@ const styles = StyleSheet.create({
     backgroundColor: canvas.edgeTop,
   },
   lowerEdge: {
-    ...StyleSheet.absoluteFillObject,
+    position: 'absolute',
     top: '50%',
+    left: 0,
+    right: 0,
+    bottom: 0,
     backgroundColor: canvas.edgeBottom,
   },
   map: {

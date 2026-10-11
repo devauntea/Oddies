@@ -7,7 +7,7 @@ Built for AI Engineer NYC 2026.
 - Live: https://oddies.fly.dev
 - Repo: https://github.com/devauntea/Oddies
 
-The web app is at the repo root. The team's Expo app is in `mobile/`, and the design source files are in `temporal/`. The look follows the team's playbook, `temporal/style.md`. See [Design](#design) and [For designers](#for-designers).
+The web app is at the repo root. The team's Expo app is in `mobile/`, and the design source files are in `temporal/`. Art, layout and tokens shared by both apps are in `assets/` (see [assets/README.md](assets/README.md)). The look follows the team's playbook, `temporal/style.md`. See [Design](#design) and [For designers](#for-designers).
 
 ## Stack
 
@@ -139,6 +139,7 @@ Built from `temporal/`: the playbook (`style.md`), the layered map art, and the 
 
 - **Palette and type:** ivory surfaces, plum text, iris for selected things, Fraunces for titles, Nunito Sans for the rest. All tokens are at the top of `public/css/base.css`.
 - **The map:** `public/js/map.js` stacks the art in layers (meadow, four worlds, foliage, the person) so each world is its own button. Where each layer sits is in CSS under "Map", as shares of the map's size, matched by eye to `temporal/Girl among four colorful worlds.png`. The playbook's `scene-layout.json` was not in the folder; if it turns up, put its numbers there.
+- **Shared assets:** `assets/` holds one copy of the map layers, personalities, the layered character, the SVG rig, storyboards and tokens for web and mobile. `assets/scene-layout.json` now exists: layer placement calibrated against the composite, hit areas, camera focus points, path geometry and motion timings. The Expo home map reads it; the web serves it at `/assets/scene-layout.json`. Motion plan: `assets/docs/animation.md`.
 - **Which oddie gets which world:** `public/js/worlds.js`. Each world goes to the oddie whose name, life and interests fit it best (monk to Quiet Peaks, agent to Midnight City, painter to Color Valley, founder to Idea Gardens). Oddies left over take any free world. A fifth oddie and beyond has no art, so it shows as a chip under the map.
 - **The character:** `public/js/rig.js` draws the same person in the world's outfit at the top of the conversation sheet, with a blink. The art is generated into `public/js/rig-art.js` from `temporal/preview.html`.
 - **Web images:** `public/img/map/*.webp` are cropped, resized copies of the PNGs in `temporal/` (about 540 KB in all, against 10 MB of source).

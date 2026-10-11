@@ -1,27 +1,29 @@
 // Draws the tree as SVG. No data fetching here: give it the state from
 // GET /api/state and it draws.
 
+import { assignWorlds } from './worlds.js';
+
 const SVG_NS = 'http://www.w3.org/2000/svg';
 
 // Every number that decides where things sit. Designers: change spacing here.
 // Units are SVG user units (the viewBox is `width` wide).
 export const TREE_SPACING = {
-  width: 1240,
-  rowHeight: 130, // vertical distance between branches
-  paddingY: 70, // room above the first branch and below the last
-  nowX: 80, // the Now node
-  fanEndX: 260, // where a branch stops curving and runs flat
-  milestoneStartX: 320, // first milestone on a branch
+  width: 1260,
+  rowHeight: 136, // vertical distance between branches
+  paddingY: 76, // room above the first branch and below the last
+  nowX: 92, // the Now node
+  fanEndX: 270, // where a branch stops curving and runs flat
+  milestoneStartX: 330, // first milestone on a branch
   milestoneEndX: 880, // last milestone on a branch
-  oddieX: 960, // the oddie node at the end
-  nowRadius: 18,
-  milestoneRadius: 9,
-  oddieRadius: 16,
-  labelOffsetY: 30, // milestone label, distance below its node
+  oddieX: 968, // the oddie at the end
+  nowRadius: 30,
+  milestoneRadius: 10,
+  oddieRadius: 18,
+  labelOffsetY: 34, // milestone label, distance below its node
   labelLineHeight: 15,
-  labelCharWidth: 6.6, // rough width of one label character, used for wrapping
-  oddieLabelGap: 12, // space between the oddie node and its name
-  oddieLabelCharWidth: 8.4,
+  labelCharWidth: 6.9, // rough width of one label character, used for wrapping
+  oddieLabelGap: 14, // space between the oddie and its name
+  oddieLabelCharWidth: 9.2,
 };
 
 // ALL layout math lives in this one function. It takes the oddies (each with
@@ -44,7 +46,7 @@ export function layoutTree(oddies, spacing = TREE_SPACING) {
     }));
     return {
       oddieId: oddie.id,
-      // Curves out from the Now node, then runs flat to the oddie node.
+      // Curves out from the Now node, then runs flat to the oddie.
       path: `M ${now.x} ${now.y} C ${curveX} ${now.y}, ${curveX} ${y}, ${s.fanEndX} ${y} L ${s.oddieX} ${y}`,
       milestones,
       milestoneLabelChars: Math.max(8, Math.floor((gap - 14) / s.labelCharWidth)),
@@ -99,12 +101,13 @@ export function formatDate(iso, options = { month: 'short', day: 'numeric', year
 // Draws the whole tree into `svg`.
 //   state: the object from GET /api/state
 //   options.openOddieId: the oddie whose panel is open, if any
-//   options.onOddieSelect(oddie): called when an oddie node is clicked or
+//   options.onOddieSelect(oddie): called when an oddie is clicked or
 //     activated with Enter or Space
 export function renderTree(svg, state, { openOddieId = null, onOddieSelect = () => {} } = {}) {
   const { oddies, self, today_pick: pick } = state;
   const layout = layoutTree(oddies);
   const s = TREE_SPACING;
+  const worlds = assignWorlds(oddies);
 
   svg.replaceChildren();
   svg.setAttribute('viewBox', `0 0 ${layout.width} ${layout.height}`);
@@ -122,6 +125,8 @@ export function renderTree(svg, state, { openOddieId = null, onOddieSelect = () 
       'data-oddie-id': oddie.id,
       'data-status': oddie.status,
       'data-picked': picked,
+      // Which illustrated world this path belongs to. Sets its color in CSS.
+      'data-world': worlds.get(oddie.id) || 'none',
     });
     group.append(el('path', { class: 'tree-branch__line', d: branch.path }));
 
@@ -148,10 +153,10 @@ export function renderTree(svg, state, { openOddieId = null, onOddieSelect = () 
       );
     });
 
-    const name = el('text', { class: 'tree-oddie__label', x: branch.oddie.labelX, y: branch.oddie.y - 2 });
+    const name = el('text', { class: 'tree-oddie__label', x: branch.oddie.labelX, y: branch.oddie.y - 3 });
     name.textContent = shorten(oddie.name, branch.oddieLabelChars);
-    const horizon = el('text', { class: 'tree-oddie__horizon', x: branch.oddie.labelX, y: branch.oddie.y + 16 });
-    horizon.textContent = `${oddie.horizon_years} years out${oddie.status === 'dormant' ? ', dormant' : ''}`;
+    const horizon = el('text', { class: 'tree-oddie__horizon', x: branch.oddie.labelX, y: branch.oddie.y + 17 });
+    horizon.textContent = `${oddie.horizon_years} years out${oddie.status === 'dormant' ? ', dormant' : ''}${picked ? ', today' : ''}`;
     const oddieTitle = el('title');
     oddieTitle.textContent = `${oddie.name}. ${oddie.life}`;
 
@@ -166,7 +171,12 @@ export function renderTree(svg, state, { openOddieId = null, onOddieSelect = () 
         tabindex: 0,
         'aria-label': `Talk to ${oddie.name}`,
       },
-      [oddieTitle, el('circle', { class: 'tree-oddie__node', cx: branch.oddie.x, cy: branch.oddie.y, r: s.oddieRadius }), name, horizon]
+      [
+        oddieTitle,
+        el('circle', { class: 'tree-oddie__node', cx: branch.oddie.x, cy: branch.oddie.y, r: s.oddieRadius }),
+        name,
+        horizon,
+      ]
     );
     node.addEventListener('click', () => onOddieSelect(oddie));
     node.addEventListener('keydown', (event) => {
@@ -180,9 +190,9 @@ export function renderTree(svg, state, { openOddieId = null, onOddieSelect = () 
   });
 
   // Drawn last so it sits on top of where the branches start.
-  const nowLabel = el('text', { class: 'tree-now__label', x: layout.now.x, y: layout.now.y + s.nowRadius + 20, 'text-anchor': 'middle' });
+  const nowLabel = el('text', { class: 'tree-now__label', x: layout.now.x, y: layout.now.y + 6, 'text-anchor': 'middle' });
   nowLabel.textContent = 'Now';
-  const nowDate = el('text', { class: 'tree-now__date', x: layout.now.x, y: layout.now.y + s.nowRadius + 38, 'text-anchor': 'middle' });
+  const nowDate = el('text', { class: 'tree-now__date', x: layout.now.x, y: layout.now.y + s.nowRadius + 22, 'text-anchor': 'middle' });
   nowDate.textContent = formatDate(self.now_date);
   const nowTitle = el('title');
   nowTitle.textContent = `${self.name}, today`;

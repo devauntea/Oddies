@@ -4,7 +4,11 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Oddies</title>
-    <meta name="description" content="Oddies draws the lives you could still live as a tree and helps you work on one branch today.">
+    <meta name="description" content="One you, many possibilities. Oddies draws the lives you could still live as worlds on a map and helps you work on one path today.">
+    <link rel="icon" href="/img/logo.webp">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=Nunito+Sans:opsz,wght@6..12,400;6..12,600;6..12,700&display=swap">
     <link rel="stylesheet" href="/css/base.css">
     <script src="https://browser.sentry-cdn.com/11.6.0/bundle.tracing.min.js" integrity="sha384-yktoq3bnSR9ZyyKjW/n9Co8AAItq1N/6OuvY9mTtMhl/IBpCbsDs6N6hugod29Hc" crossorigin="anonymous"></script>
     <script src="/config.js"></script>
@@ -12,13 +16,17 @@
   </head>
   <body class="page page--home" data-page="home">
     <main class="home">
-      <h1 class="home__title">Oddies</h1>
-      <p class="home__line">Every life you could still live, drawn as one tree. Pick a branch to work on today.</p>
-      <div class="home__actions">
-        <button type="button" class="button" data-action="see-demo">See the demo</button>
-        <a class="button" href="/intake" data-action="start-own">Start my own</a>
+      <div class="home__words">
+        <h1 class="home__title"><img class="home__logo" src="/img/logo.webp" alt="Oddies" width="1774" height="887"></h1>
+        <p class="home__promise">One you, many possibilities.</p>
+        <p class="home__line">Every life you could still live, drawn as a world you can walk into. Meet the you who lives there, then pick one path to work on today.</p>
+        <div class="home__actions">
+          <button type="button" class="button" data-action="see-demo">See the demo</button>
+          <a class="button" href="/intake" data-action="start-own">Start my own</a>
+        </div>
+        <p class="notice" data-role="notice" role="status" hidden></p>
       </div>
-      <p class="notice" data-role="notice" role="status" hidden></p>
+      <img class="home__scene" src="/img/map/scene.webp" alt="An illustrated meadow. A woman stands at the center, with paths leading to a temple garden, a night city, an art cottage and a glass studio." width="800" height="1200">
     </main>
     <script type="module" src="/js/home.js"></script>
   </body>

@@ -1,13 +1,13 @@
 # Oddies
 
-Oddies draws the lives you could still live as a sideways tree. You are the node on the left. Each branch runs through milestones to an oddie: a version of you who lived that life. You can talk to any oddie, and each day you pick one branch. Oddies then searches the live web for real things you can do today toward it.
+One you, many possibilities. Oddies draws the lives you could still live as worlds on a map, with you in the middle. Each world is home to an oddie: a version of you who lived that life. You can talk to any oddie, and each day you pick one path. Oddies then searches the live web for real things you can do today toward it. Under the map, a board shows every path milestone by milestone.
 
 Built for AI Engineer NYC 2026.
 
 - Live: https://oddies.fly.dev
 - Repo: https://github.com/devauntea/Oddies
 
-This repo is the framework only. The pages are plain on purpose so the design can be layered on without touching logic. See [For designers](#for-designers).
+The web app is at the repo root. The team's Expo app is in `mobile/`, and the design source files are in `temporal/`. The look follows the team's playbook, `temporal/style.md`. See [Design](#design) and [For designers](#for-designers).
 
 ## Stack
 
@@ -130,6 +130,20 @@ Not ported, on purpose: mock mode and generic tasks with no link. This app never
 - Server: `instrument.js`, loaded with `node --import`. Every Gemini call is a `gen_ai.generate_content` span with the model and input, output and total token counts (`src/gemini.js`). A retry or a fallback to another model is its own span, so a trace shows which model answered. Every Nimble call is a `nimble.search` span with the query, lane and result count, or a `nimble.extract` span (`src/nimble.js`). A Today request wraps both in a `today.build_steps` span that also records how many suggested steps were dropped by the URL check.
 - Browser: the Sentry CDN bundle plus `public/js/sentry-init.js`. Page loads and API calls are traced, and the trace id is passed to the server, so one click shows up as one trace from browser to Gemini and Nimble.
 
+## Design
+
+Built from `temporal/`: the playbook (`style.md`), the layered map art, and the character rig in `preview.html`.
+
+- **Palette and type:** ivory surfaces, plum text, iris for selected things, Fraunces for titles, Nunito Sans for the rest. All tokens are at the top of `public/css/base.css`.
+- **The map:** `public/js/map.js` stacks the art in layers (meadow, four worlds, foliage, the person) so each world is its own button. Where each layer sits is in CSS under "Map", as shares of the map's size, matched by eye to `temporal/Girl among four colorful worlds.png`. The playbook's `scene-layout.json` was not in the folder; if it turns up, put its numbers there.
+- **Which oddie gets which world:** `public/js/worlds.js`. Each world goes to the oddie whose name, life and interests fit it best (monk to Quiet Peaks, agent to Midnight City, painter to Color Valley, founder to Idea Gardens). Oddies left over take any free world. A fifth oddie and beyond has no art, so it shows as a chip under the map.
+- **The character:** `public/js/rig.js` draws the same person in the world's outfit at the top of the conversation sheet, with a blink. The art is generated into `public/js/rig-art.js` from `temporal/preview.html`.
+- **Web images:** `public/img/map/*.webp` are cropped, resized copies of the PNGs in `temporal/` (about 540 KB in all, against 10 MB of source).
+- **Logo:** `public/img/logo.webp` is the green wordmark artwork. The playbook's default is plum on ivory; that version was not supplied.
+- **Motion:** worlds drift a few pixels, the person breathes, the sheet fades in. All of it is off under Reduce Motion.
+
+Not built from the playbook yet: voice input, saving memories, a story view, and the walk-into-a-world transition.
+
 ## For designers
 
 Everything visual is yours to replace. Three rules keep the logic working:
@@ -167,14 +181,30 @@ Hooks: `data-role` = `intake-form`, `intake-text`, `intake-status`, `intake-erro
 Written by JS (`public/js/path-form.js`): `label.path-form__field.path-form__field--{name}` containing `.path-form__label` and `.path-form__input[data-field="{name}"]`, where name is `name`, `life`, `interests`, `persona_brief`, `horizon_years` or `milestones`.
 In the HTML: `.path-form`, `.path-form__fields`, `.path-form__note`, `.path-form__save`, `details.path-edit`, `details.path-add`.
 
-### tree.html: the tree
+### tree.html: the map
+
+`div.world-map[data-role="world-map"]`, filled by `public/js/map.js`.
+
+| Element | Class | State classes and attributes |
+| --- | --- | --- |
+| Meadow and foliage pictures | `.world-map__layer`, `.world-map__meadow`, `.world-map__foliage` | |
+| One world (a button) | `.world`, `.world--serenity`, `--midnight`, `--artist`, `--founder` | `.world--active` or `.world--dormant`, `.world--picked` for today's pick, `.world--open` while its sheet is open. `data-role="world"`, `data-world`, `data-oddie-id`, `data-status`, `data-picked`, `data-open` |
+| World picture, label | `.world__art`, `.world__label`, `.world__name`, `.world__note` | |
+| The person, the Now pill | `.world-map__self`, `.world-map__now` | |
+| Paths with no world | `.more-paths`, `.path-chips`, `.path-chip` | `.path-chip--open`, `data-role="path-chip"`, `data-picked` |
+
+**World color:** anything that belongs to an oddie carries `data-world` (`serenity`, `midnight`, `artist`, `founder` or `none`), which sets the CSS variable `--tone`. It is on the worlds, the milestone branches, the oddie's sheet, the rows in Today, and the past-day pills.
+
+Around it: `.map-section`, `.map-section__title`, `.map-section__self`, `.map-section__hint`.
+
+### tree.html: the milestone board
 
 An SVG drawn by `public/js/tree.js`. **All spacing is in one place:** the `TREE_SPACING` object and the `layoutTree()` function at the top of that file. Change numbers there to move things. The SVG scales to its container and scrolls sideways inside `.tree-scroll` on small screens (`min-width` on `.tree` in the CSS sets how small it may get).
 
 | Element | Class | State classes and attributes |
 | --- | --- | --- |
 | The SVG | `.tree` | |
-| One branch (group) | `.tree-branch` | `.tree-branch--active` or `.tree-branch--dormant`, `.tree-branch--picked` for today's pick. `data-oddie-id`, `data-status`, `data-picked` |
+| One branch (group) | `.tree-branch` | `.tree-branch--active` or `.tree-branch--dormant`, `.tree-branch--picked` for today's pick. `data-oddie-id`, `data-status`, `data-picked`, `data-world` |
 | Branch line | `.tree-branch__line` | |
 | Milestone (group) | `.tree-milestone` | `.tree-milestone--reached` or `.tree-milestone--unreached`. `data-milestone-id`, `data-reached` |
 | Milestone dot, label | `.tree-milestone__node`, `.tree-milestone__label` | |
@@ -186,7 +216,7 @@ Around it: `.tree-section`, `.tree-section__title`, `.tree-section__self`, `.tre
 
 ### tree.html: oddie panel and chat
 
-`aside.panel.panel--chat[data-panel="chat"]`. Hidden until an oddie is clicked. Gets `data-oddie-id`, `data-status`, and `data-chat-busy="true"` while a reply is being written.
+`aside.panel.panel--chat[data-panel="chat"]`. Hidden until a world is chosen. Gets `data-oddie-id`, `data-status`, `data-world`, and `data-chat-busy="true"` while a reply is being written. The header holds `svg.oddie-rig[data-role="chat-rig"]` (the character, with `data-outfit`) and `.oddie-header__world[data-role="chat-world"]` (the world's name).
 
 In the HTML: `.panel__header`, `.panel__title`, `.panel__close`, `.oddie-life`, `.oddie-interests`, `.oddie-milestones`, `.oddie-actions`, `.chat__title`, `.chat__empty`, `.chat-log`, `.chat__status`, `.chat-form`, `.chat-form__label`, `.chat-form__input`, `.chat-form__send`.
 

@@ -5,6 +5,9 @@ import { renderTree } from './tree.js';
 import { initChat } from './chat.js';
 import { initToday } from './today.js';
 import { createPathFields } from './path-form.js';
+import { renderMap } from './map.js';
+import { worldFor } from './worlds.js';
+import { mountRig } from './rig.js';
 
 const $ = (selector) => document.querySelector(selector);
 
@@ -12,6 +15,10 @@ const els = {
   notice: $('[data-role="notice"]'),
   selfLine: $('[data-role="self-line"]'),
   tree: $('[data-role="tree"]'),
+  map: $('[data-role="world-map"]'),
+  morePaths: $('[data-role="more-paths"]'),
+  rig: $('[data-role="chat-rig"]'),
+  world: $('[data-role="chat-world"]'),
   panel: $('[data-panel="chat"]'),
   name: $('[data-role="chat-name"]'),
   life: $('[data-role="chat-life"]'),
@@ -41,6 +48,8 @@ addFields.clear();
 let state = null;
 let openOddieId = null;
 let editFilledFor = null; // the oddie whose values are in the edit form
+let rig = null; // the character drawn in the panel
+let rigKey = null;
 
 const openOddie = () => state.oddies.find((o) => o.id === openOddieId) || null;
 
@@ -61,8 +70,17 @@ function renderPanel() {
     editFilledFor = null;
     return;
   }
+  const world = worldFor(state, oddie.id);
   els.panel.dataset.oddieId = oddie.id;
   els.panel.dataset.status = oddie.status;
+  els.panel.dataset.world = world.key;
+  els.world.textContent = world.name;
+  // Same person, different outfit. Redraw only when the outfit changes.
+  if (rigKey !== `${oddie.id}:${world.outfit}`) {
+    if (rig) rig.stop();
+    rig = mountRig(els.rig, world.outfit, { bust: true });
+    rigKey = `${oddie.id}:${world.outfit}`;
+  }
   els.name.textContent = oddie.name;
   els.life.textContent = oddie.life;
   els.toggleStatus.textContent = oddie.status === 'active' ? 'Mark dormant' : 'Mark active';
@@ -88,14 +106,20 @@ function renderPanel() {
 
 function render() {
   const count = state.oddies.length;
-  els.selfLine.textContent = `${state.self.name}, ${state.self.city}. ${count} ${count === 1 ? 'path' : 'paths'} open.`;
+  els.selfLine.textContent = `${state.self.name}, in ${state.self.city}. ${count} ${count === 1 ? 'path' : 'paths'} open, none of them closed.`;
+  renderMap(els.map, els.morePaths, state, { openOddieId, onOddieSelect: selectOddie });
   renderTree(els.tree, state, { openOddieId, onOddieSelect: selectOddie });
   renderPanel();
   today.render(state);
 }
 
+// Hands focus back to whatever opens this oddie: its world on the map, its
+// chip under the map, or its node on the milestone board.
 function focusOddieNode(id) {
-  els.tree.querySelector(`.tree-oddie[data-oddie-id="${id}"]`)?.focus();
+  const opener =
+    document.querySelector(`[data-role="world"][data-oddie-id="${id}"], [data-role="path-chip"][data-oddie-id="${id}"]`) ||
+    els.tree.querySelector(`.tree-oddie[data-oddie-id="${id}"]`);
+  opener?.focus();
 }
 
 function selectOddie(oddie) {

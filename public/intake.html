@@ -3,8 +3,12 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Start your own tree | Oddies</title>
+    <title>Start your own map | Oddies</title>
     <meta name="description" content="Paste what you know about the lives you could live and Oddies drafts four to six paths you can edit.">
+    <link rel="icon" href="/img/logo.webp">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=Nunito+Sans:opsz,wght@6..12,400;6..12,600;6..12,700&display=swap">
     <link rel="stylesheet" href="/css/base.css">
     <script src="https://browser.sentry-cdn.com/11.6.0/bundle.tracing.min.js" integrity="sha384-yktoq3bnSR9ZyyKjW/n9Co8AAItq1N/6OuvY9mTtMhl/IBpCbsDs6N6hugod29Hc" crossorigin="anonymous"></script>
     <script src="/config.js"></script>
@@ -12,14 +16,14 @@
   </head>
   <body class="page page--intake" data-page="intake">
     <header class="site-header">
-      <a class="site-header__home" href="/">Oddies</a>
+      <a class="site-header__home" href="/"><img class="site-header__logo" src="/img/logo.webp" alt="Oddies, home" width="1774" height="887"></a>
       <nav class="site-header__nav" aria-label="Site">
-        <a href="/tree">Back to the tree</a>
+        <a href="/tree">Back to the map</a>
       </nav>
     </header>
 
     <main class="intake">
-      <h1 class="intake__title">Start your own tree</h1>
+      <h1 class="intake__title">Start your own map</h1>
       <p class="intake__lead">Paste what your AI assistant knows about you, or just list the lives you think about. Oddies drafts four to six paths. You can edit all of them before anything is saved.</p>
 
       <form class="intake-form" data-role="intake-form">
@@ -61,9 +65,9 @@
           <div class="draft-list" data-role="draft-list"></div>
 
           <button type="button" class="button" data-action="draft-add">Add another path</button>
-          <p class="drafts__warning">Saving replaces the tree that is there now, including its chats, steps and progress.</p>
+          <p class="drafts__warning">Saving replaces the map that is there now, including its conversations, steps and progress.</p>
           <p class="panel__error" data-role="drafts-error" role="alert" hidden></p>
-          <button type="submit" class="button" data-action="save-oddies">Save and open the tree</button>
+          <button type="submit" class="button" data-action="save-oddies">Save and open the map</button>
         </form>
       </section>
     </main>

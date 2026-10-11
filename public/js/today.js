@@ -2,6 +2,7 @@
 // and see which branch got each past day.
 import { api, setNotice } from './api.js';
 import { formatDate } from './tree.js';
+import { worldFor } from './worlds.js';
 
 export function initToday(panel, { refresh, onError }) {
   const $ = (selector) => panel.querySelector(selector);
@@ -44,6 +45,7 @@ export function initToday(panel, { refresh, onError }) {
         item.dataset.oddieId = oddie.id;
         item.dataset.picked = picked;
         item.dataset.status = oddie.status;
+        item.dataset.world = worldFor(state, oddie.id).key;
 
         const button = element('button', 'branch-list__choose', "Choose today's path");
         button.type = 'button';
@@ -132,6 +134,7 @@ export function initToday(panel, { refresh, onError }) {
         const item = element('li', `history-strip__day${isToday ? ' history-strip__day--today' : ''}`);
         item.dataset.date = day.date;
         item.dataset.oddieId = day.oddie_id;
+        item.dataset.world = worldFor(state, day.oddie_id).key;
         item.dataset.today = isToday;
         item.append(
           element('span', 'history-strip__date', isToday ? 'Today' : formatDate(day.date, { month: 'short', day: 'numeric' })),

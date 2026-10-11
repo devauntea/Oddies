@@ -22,6 +22,8 @@ export { ApiError, fetchDocument, fetchResearchPack } from './client/apiClient';
 export { useDocument, useResearch } from './client/hooks';
 export { setTaskDone, useTaskProgress } from './client/taskProgress';
 
+export { MarkdownView } from './components/MarkdownView';
+export { PillButton, type ResearchTone } from './components/parts';
 export { ResearchPackView } from './components/ResearchPackView';
 export { ResourceList } from './components/ResourceList';
 export { TaskList } from './components/TaskList';

@@ -138,7 +138,9 @@ function WorldIntroView({ world }: { world: SceneWorld }) {
         onLayout={onSheetLayout}
         style={[styles.sheet, { paddingBottom: insets.bottom + spacing.lg }, sheetMotion]}
       >
-        <Text accessibilityRole="header" style={styles.title}>{world.name}</Text>
+        <Text accessibilityRole="header" style={styles.title}>
+          {world.name}
+        </Text>
         <View style={styles.whoRow}>
           <View style={[styles.dot, { backgroundColor: world.accent }]} />
           <Text style={styles.who}>{who}</Text>

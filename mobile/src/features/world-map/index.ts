@@ -3,8 +3,8 @@
  * shared with the web app (`assets/scene-layout.json`). Import from `@/features/world-map`.
  */
 export type { Rect, SceneLayer, SceneLayout, SceneWorld, WorldId } from './types';
-export { findWorld, isWorldId, sceneLayout, WORLD_IDS } from './layout';
+export { breathSecondsFor, findWorld, isWorldId, sceneLayout, WORLD_IDS } from './layout';
 export { fitCanvas } from './math';
-export { WorldIntro } from './WorldIntro';
+export { LAYER_SOURCES, PORTRAIT_SOURCES } from './sources';
 export { WorldMap } from './WorldMap';
 export { WorldMapScreen } from './WorldMapScreen';

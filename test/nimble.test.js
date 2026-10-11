@@ -48,13 +48,38 @@ test('a failed search throws', async () => {
   await assert.rejects(() => nimble.search({ query: 'anything' }), /429/);
 });
 
-test('extract asks for markdown and reports whether it worked', async () => {
+test('extract asks for the main content without rendering first', async () => {
   const sdk = fakeSdk({ extractResponse: { status: 'success', url: 'https://example.org/a', data: { markdown: '# Title\n\nBody' } } });
   const nimble = createNimble({ client: sdk });
 
   const doc = await nimble.extract('https://example.org/a');
   assert.deepEqual(doc, { ok: true, markdown: '# Title\n\nBody', url: 'https://example.org/a' });
-  assert.deepEqual(sdk.calls[0].params, { url: 'https://example.org/a', formats: ['markdown'] });
+  assert.equal(sdk.calls.length, 1);
+  assert.deepEqual(sdk.calls[0].params, {
+    url: 'https://example.org/a',
+    formats: ['markdown'],
+    render: false,
+    markdown_backend: 'main_content',
+  });
+});
+
+test('extract falls back to a rendered fetch, then gives up cleanly', async () => {
+  const calls = [];
+  const sdk = {
+    extract: {
+      async run(params) {
+        calls.push(params.render);
+        if (params.render === false) throw new Error('500 server returned 403');
+        return { status: 'success', data: { markdown: 'Rendered body' } };
+      },
+    },
+  };
+  const doc = await createNimble({ client: sdk }).extract('https://example.org/blocked');
+  assert.deepEqual(calls, [false, 'auto']);
+  assert.equal(doc.markdown, 'Rendered body');
+
+  const dead = createNimble({ client: fakeSdk({ fail: new Error('down') }) });
+  assert.deepEqual(await dead.extract('https://example.org/x'), { ok: false, markdown: '', url: 'https://example.org/x' });
 });
 
 test('without a key the client says it is not configured', async () => {

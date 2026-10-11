@@ -28,6 +28,27 @@
       </section>
 
       <div class="panels">
+        <section class="panel panel--today" data-panel="today" aria-labelledby="today-heading">
+          <h2 class="panel__title" id="today-heading">Today</h2>
+          <p class="today__date" data-role="today-date"></p>
+          <p class="today__pick" data-role="today-pick"></p>
+          <ul class="branch-list" data-role="branch-list"></ul>
+
+          <p class="today__status" data-role="today-status" role="status" hidden></p>
+          <div class="today-error" data-role="today-error" role="alert" hidden>
+            <p class="today-error__text" data-role="today-error-text"></p>
+            <button type="button" class="today-error__retry" data-action="today-retry">Try again</button>
+          </div>
+
+          <h3 class="step-list__title">Steps</h3>
+          <p class="step-list__empty" data-role="step-empty"></p>
+          <ul class="step-list" data-role="step-list"></ul>
+          <button type="button" class="step-list__refresh" data-action="today-refresh" hidden>Find different steps</button>
+
+          <h3 class="history-strip__title">Past days</h3>
+          <ol class="history-strip" data-role="history-strip"></ol>
+        </section>
+
         <aside class="panel panel--chat" data-panel="chat" aria-labelledby="chat-heading" hidden>
           <header class="panel__header">
             <h2 class="panel__title" id="chat-heading" data-role="chat-name" tabindex="-1"></h2>

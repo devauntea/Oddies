@@ -2,6 +2,7 @@
 import { api, setNotice } from './api.js';
 import { renderTree } from './tree.js';
 import { initChat } from './chat.js';
+import { initToday } from './today.js';
 
 const $ = (selector) => document.querySelector(selector);
 
@@ -20,6 +21,10 @@ const els = {
 };
 
 const chat = initChat(els.panel);
+const today = initToday($('[data-panel="today"]'), {
+  refresh: () => refresh(),
+  onError: (error) => setNotice(els.notice, error.message),
+});
 
 let state = null;
 let openOddieId = null;
@@ -61,6 +66,7 @@ function render() {
   els.selfLine.textContent = `${state.self.name}, ${state.self.city}. ${state.oddies.length} branches open.`;
   renderTree(els.tree, state, { openOddieId, onOddieSelect: selectOddie });
   renderPanel();
+  today.render(state);
 }
 
 function focusOddieNode(id) {

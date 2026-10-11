@@ -4,6 +4,7 @@ const { HttpError } = require('./errors');
 const { todayISO } = require('./dates');
 const { SEED, loadSeed } = require('./seed');
 const { oddieSystemPrompt } = require('./prompts');
+const { buildToday } = require('./today');
 const store = require('./store');
 
 const PUBLIC_DIR = path.join(__dirname, '..', 'public');
@@ -103,6 +104,28 @@ function createApp({ db, gemini, nimble }) {
 
     const messages = store.addExchange(db, oddie.id, text, reply.trim());
     res.json({ reply: messages[1].text, messages });
+  });
+
+  // ---------- Today ----------
+
+  app.post('/api/today', limitAi, async (req, res) => {
+    const body = req.body || {};
+    if (!Number.isInteger(body.oddie_id)) throw new HttpError(400, 'invalid_input', 'oddie_id is required');
+    const result = await buildToday({
+      db,
+      gemini,
+      nimble,
+      oddieId: body.oddie_id,
+      date: todayISO(),
+      refresh: body.refresh === true,
+    });
+    res.json(result);
+  });
+
+  app.patch('/api/steps/:id', (req, res) => {
+    const done = req.body ? req.body.done : undefined;
+    if (done !== undefined && typeof done !== 'boolean') throw new HttpError(400, 'invalid_input', 'done must be true or false');
+    res.json(store.setStepDone(db, req.params.id, done));
   });
 
   app.use('/api', (req, res) => {

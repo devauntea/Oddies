@@ -159,3 +159,92 @@ label {
   padding: 12px;
   min-width: 0;
 }
+
+.branch-list,
+.step-list,
+.history-strip,
+.chat-log {
+  list-style: none;
+  padding: 0;
+}
+
+.branch-list__item,
+.step {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 12px;
+  padding: 8px 0;
+  border-top: 1px solid;
+}
+
+.branch-list__name,
+.chat-message__who {
+  font-weight: 600;
+}
+
+.branch-list__next {
+  flex: 1 1 12em;
+}
+
+.step__label {
+  flex: 1 1 14em;
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+}
+
+.step__check {
+  width: auto;
+  flex: none;
+}
+
+.step__type {
+  flex: none;
+  border: 1px solid;
+  padding: 0 6px;
+}
+
+.step--done .step__title {
+  text-decoration: line-through;
+}
+
+.step__link,
+.site-header a {
+  display: inline-block;
+  padding: 10px 0;
+}
+
+.history-strip {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+}
+
+.history-strip__day {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid;
+  padding: 4px 8px;
+}
+
+.history-strip__day--today {
+  border-width: 3px;
+}
+
+.chat-message {
+  padding: 8px 0;
+  border-top: 1px solid;
+}
+
+.chat-message__text {
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+.oddie-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}

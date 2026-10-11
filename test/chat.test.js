@@ -27,12 +27,12 @@ test('chat sends the persona, the self summary, real progress and history', asyn
   assert.equal(first.json.reply, 'In my version, I started with the class.');
 
   const { system, contents } = gemini.calls[0];
-  assert.match(system, /June the Luthier/);
-  assert.match(system, /apprenticed under a violin maker/, 'persona brief');
-  assert.match(system, /instrument making/, 'interests');
+  assert.match(system, /June the Graphic Designer/);
+  assert.match(system, /took night classes in type/, 'persona brief');
+  assert.match(system, /typography/, 'interests');
   assert.match(system, /Astoria, Queens/, 'self summary');
-  assert.match(system, /Milestones they have reached: Take a weekend instrument repair class; Restore a damaged student cello\./);
-  assert.match(system, /Next milestone: Apprentice part time with a working luthier\./);
+  assert.match(system, /Milestones they have reached: Finish a typography course; Design an identity for a real client\./);
+  assert.match(system, /Next milestone: Publish a portfolio with five projects\./);
   assert.match(system, /Never claim to know for certain/);
   assert.deepEqual(contents, [{ role: 'user', parts: [{ text: 'What did it cost you?' }] }]);
 
@@ -51,12 +51,12 @@ test('each oddie has its own history and its own prompt', async (t) => {
   const app = await startApp({ gemini });
   t.after(app.close);
 
-  await app.call('POST', '/api/oddies/1/chat', { text: 'hello luthier' });
-  await app.call('POST', '/api/oddies/5/chat', { text: 'hello translator' });
+  await app.call('POST', '/api/oddies/1/chat', { text: 'hello designer' });
+  await app.call('POST', '/api/oddies/5/chat', { text: 'hello entrepreneur' });
 
-  assert.match(gemini.calls[1].system, /June the Translator/);
-  assert.doesNotMatch(gemini.calls[1].system, /violin maker/);
-  assert.equal(gemini.calls[1].contents.length, 1, 'the translator does not see the luthier chat');
+  assert.match(gemini.calls[1].system, /June the Entrepreneur/);
+  assert.doesNotMatch(gemini.calls[1].system, /night classes in type/);
+  assert.equal(gemini.calls[1].contents.length, 1, 'the entrepreneur does not see the designer chat');
   assert.equal((await app.call('GET', '/api/oddies/5/chat')).json.messages.length, 2);
 });
 
@@ -84,11 +84,11 @@ test('PATCH and DELETE an oddie', async (t) => {
   const app = await startApp();
   t.after(app.close);
 
-  const patched = await app.call('PATCH', '/api/oddies/2', { status: 'dormant', interests: ['triage', 'night shifts'] });
+  const patched = await app.call('PATCH', '/api/oddies/2', { status: 'dormant', interests: ['case files', 'surveillance'] });
   assert.equal(patched.status, 200);
   assert.equal(patched.json.oddie.status, 'dormant');
-  assert.deepEqual(patched.json.oddie.interests, ['triage', 'night shifts']);
-  assert.equal(patched.json.oddie.name, 'June the Trauma Nurse', 'untouched fields stay');
+  assert.deepEqual(patched.json.oddie.interests, ['case files', 'surveillance']);
+  assert.equal(patched.json.oddie.name, 'June the FBI Agent', 'untouched fields stay');
 
   assert.equal((await app.call('PATCH', '/api/oddies/2', { status: 'asleep' })).status, 400);
 

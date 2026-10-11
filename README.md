@@ -11,7 +11,7 @@ This repo is the framework only. The pages are plain on purpose so the design ca
 
 ## Stack
 
-Node 24, Express 5, SQLite (better-sqlite3), plain HTML and vanilla JS in `/public`. Gemini through `@google/genai`, Nimble Search API over REST, Sentry on server and browser. No accounts: one person's tree per deployment.
+Node 24, Express 5, SQLite (better-sqlite3), plain HTML and vanilla JS in `/public`. Gemini through `@google/genai`, Nimble Search and Extract through `@nimble-way/nimble-js`, Sentry on server and browser. No accounts: one person's tree per deployment.
 
 ## Run it locally
 
@@ -87,23 +87,45 @@ Without the secret the workflow still runs the tests and prints a warning instea
 | `POST /api/oddies/:id/chat` | `{ text }` in, the oddie's reply out |
 | `POST /api/today` | `{ oddie_id, refresh? }`. Records the pick, returns 3 to 5 steps |
 | `PATCH /api/steps/:id` | `{ done }`. Two done steps on a milestone mark it reached |
+| `POST /api/steps/:id/read` | That step's page as markdown, through Nimble Extract |
 | `POST /api/demo/reset` | Wipes the database and reloads the demo |
 
 Errors are `{ error, message }` with a real status code.
 
 ## How Today stays real
 
-1. Gemini writes 3 search queries for the branch's next unreached milestone, using the person's city and today's date.
-2. Nimble runs the 3 searches, with one shared 20 second limit.
+1. Gemini picks 3 research lanes for the branch's next unreached milestone and writes one search query for each, using the person's city and today's date.
+2. Nimble runs the 3 searches, each with its lane's settings, under one shared 20 second limit.
 3. Gemini picks 3 to 5 steps from those results only.
 4. The server drops any step whose URL Nimble did not return (`keepRealSteps` in `src/today.js`).
 5. If Nimble fails or times out, the API returns an error and the page shows it with a Try again button. There is no fallback to made-up steps.
 
+If Gemini is the part that fails, fixed lane rules write the queries or pick the steps instead, still only from Nimble results. So Today keeps working with just a Nimble key.
+
 All prompts are in `src/prompts.js`.
+
+### Research lanes
+
+The lanes, their Nimble settings, the URL cleanup and the result-to-task rules are ported from the team's research feature on the `claude/vigilant-mayer-merd1u` branch (`src/features/research`). They follow the prototyping loop from Designing Your Life. They live in `src/research.js`.
+
+| Lane | Finds | Becomes step type | Nimble settings |
+| --- | --- | --- | --- |
+| `overview` | how to get started | `read` | 6 results |
+| `documents` | a real study document | `read` | 4 results, `content_type: ['documents']` |
+| `practice` | something hands-on | `practice` | 5 results |
+| `community` | people already doing it (prototype conversation) | `contact` | 5 results |
+| `events` | a class or meetup soon (prototype experience) | `attend` | 4 results, `time_range: 'month'` |
+| `apply` | a program or role to apply to | `apply` | 5 results |
+
+All lanes use `search_depth: 'lite'` to stay inside the 20 second limit. `apply` is new here; the other five are the team's.
+
+Also ported: reading a page inside the app. Read and practice steps get a Read here button that loads the page as text through Nimble Extract. Only URLs of saved steps can be read.
+
+Not ported, on purpose: mock mode and generic tasks with no link. This app never shows a step that did not come from a live Nimble result. The team's end-of-day reflection is shown as a line of text under the steps, not as a step.
 
 ## Sentry
 
-- Server: `instrument.js`, loaded with `node --import`. Every Gemini call is a `gen_ai.generate_content` span with the model and input, output and total token counts (`src/gemini.js`). Every Nimble call is a `nimble.search` span with the query and result count (`src/nimble.js`). A Today request wraps both in a `today.build_steps` span that also records how many suggested steps were dropped by the URL check.
+- Server: `instrument.js`, loaded with `node --import`. Every Gemini call is a `gen_ai.generate_content` span with the model and input, output and total token counts (`src/gemini.js`). Every Nimble call is a `nimble.search` span with the query, lane and result count, or a `nimble.extract` span (`src/nimble.js`). A Today request wraps both in a `today.build_steps` span that also records how many suggested steps were dropped by the URL check.
 - Browser: the Sentry CDN bundle plus `public/js/sentry-init.js`. Page loads and API calls are traced, and the trace id is passed to the server, so one click shows up as one trace from browser to Gemini and Nimble.
 
 ## For designers
@@ -174,15 +196,15 @@ Hooks: `data-role` = `chat-name`, `chat-life`, `chat-interests`, `chat-milestone
 
 `section.panel.panel--today[data-panel="today"]`. Gets `data-busy="true"` and `aria-busy` while searching.
 
-In the HTML: `.today__date`, `.today__pick`, `.branch-list`, `.today__status`, `.today-error`, `.today-error__text`, `.today-error__retry`, `.step-list__title`, `.step-list__empty`, `.step-list`, `.step-list__refresh`, `.history-strip__title`, `.history-strip`.
+In the HTML: `.today__date`, `.today__pick`, `.branch-list`, `.today__status`, `.today-error`, `.today-error__text`, `.today-error__retry`, `.step-list__title`, `.step-list__empty`, `.step-list`, `.today__reflect`, `.step-list__refresh`, `.history-strip__title`, `.history-strip`.
 
 Written by JS (`public/js/today.js`):
 
 - `li.branch-list__item` (`--picked` on today's pick; `data-oddie-id`, `data-picked`, `data-status`) with `.branch-list__name`, `.branch-list__next`, `.branch-list__choose` (the Choose today's path button), `.branch-list__picked`.
-- `li.step.step--{type}` (`--done` when ticked; `data-step-id`, `data-step-type`, `data-done`) with `.step__label`, `.step__check`, `.step__type`, `.step__title`, `.step__link`. Type is `read`, `attend`, `apply`, `contact` or `practice`.
+- `li.step.step--{type}` (`--done` when ticked; `data-step-id`, `data-step-type`, `data-done`) with `.step__label`, `.step__check`, `.step__type`, `.step__title`, `.step__link`. Type is `read`, `attend`, `apply`, `contact` or `practice`. Read and practice steps also get `.step__read` (the Read here button) and, when open, `.step__reader.step__reader--loading`, `--ready` or `--error` (`data-role="step-reader"`, `data-status`).
 - `li.history-strip__day` (`--today` on today; `data-date`, `data-oddie-id`, `data-today`) with `.history-strip__date`, `.history-strip__oddie`.
 
-Hooks: `data-role` = `today-date`, `today-pick`, `branch-list`, `today-status`, `today-error`, `today-error-text`, `step-empty`, `step-list`, `history-strip`. `data-action` = `choose-today`, `today-retry`, `today-refresh`, `toggle-step`.
+Hooks: `data-role` = `today-date`, `today-pick`, `branch-list`, `today-status`, `today-error`, `today-error-text`, `step-empty`, `step-list`, `today-reflect`, `history-strip`. `data-action` = `choose-today`, `today-retry`, `today-refresh`, `toggle-step`, `read-step`.
 
 Other hooks on the tree page: `data-action="demo-reset"`, `data-role` = `path-add`, `path-add-form`, `path-add-fields`, `path-add-error`, `data-action="path-add-save"`.
 

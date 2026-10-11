@@ -4,7 +4,7 @@ const { HttpError } = require('./errors');
 const { todayISO } = require('./dates');
 const { SEED, loadSeed } = require('./seed');
 const { oddieSystemPrompt, INTAKE_SYSTEM, INTAKE_SCHEMA } = require('./prompts');
-const { buildToday } = require('./today');
+const { buildToday, readStep } = require('./today');
 const store = require('./store');
 
 const PUBLIC_DIR = path.join(__dirname, '..', 'public');
@@ -185,6 +185,11 @@ function createApp({ db, gemini, nimble }) {
     const done = req.body ? req.body.done : undefined;
     if (done !== undefined && typeof done !== 'boolean') throw new HttpError(400, 'invalid_input', 'done must be true or false');
     res.json(store.setStepDone(db, req.params.id, done));
+  });
+
+  // Loads a step's page as text (Nimble Extract) so it can be read in the app.
+  app.post('/api/steps/:id/read', limitAi, async (req, res) => {
+    res.json(await readStep({ db, nimble, stepId: req.params.id }));
   });
 
   // ---------- Demo ----------

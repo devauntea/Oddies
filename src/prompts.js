@@ -1,6 +1,8 @@
 // Every prompt and response schema in one file, so wording can change without
 // touching the routes.
 
+const { LANES, LANE_NAMES } = require('./research');
+
 const STEP_TYPES = ['read', 'attend', 'apply', 'contact', 'practice'];
 
 // ---------- Oddie chat ----------
@@ -105,11 +107,16 @@ const INTAKE_SCHEMA = {
 };
 
 // ---------- Today ----------
+// The lanes come from the team's research feature. See src/research.js.
 
 const QUERY_SYSTEM = [
-  'You write web search queries that find real things a person can do today toward a goal.',
-  'Write exactly 3 queries. Each should find a different kind of thing: something to attend or join near them, something to read or learn from, and somewhere to apply or someone to contact.',
-  'Put the city in queries about local things. Use the month and year where it helps find current listings.',
+  'You plan web searches that find real things a person can do today toward a milestone.',
+  'Choose the 3 lanes that fit this milestone best and write one search query for each. Use each lane at most once.',
+  '',
+  'Lanes, what each is for, and the shape of its query (X is the specific subject of the milestone, not the whole sentence):',
+  ...LANE_NAMES.map((lane) => `- ${lane}: ${LANES[lane].purpose}. Shape: "${LANES[lane].shape}"`),
+  '',
+  'Replace CITY with their city. Add the city to other lanes too when being local matters.',
   'Each query is under 12 words. No quotation marks, no site: operators.',
 ].join('\n');
 
@@ -127,20 +134,33 @@ function queryPrompt({ self, oddie, milestone, today }) {
 const QUERY_SCHEMA = {
   type: 'object',
   properties: {
-    queries: { type: 'array', minItems: 3, maxItems: 3, items: { type: 'string' } },
+    queries: {
+      type: 'array',
+      minItems: 3,
+      maxItems: 3,
+      items: {
+        type: 'object',
+        properties: {
+          lane: { type: 'string', enum: LANE_NAMES },
+          query: { type: 'string' },
+        },
+        required: ['lane', 'query'],
+      },
+    },
   },
   required: ['queries'],
 };
 
 const PICK_SYSTEM = [
   'You pick steps a person can take today toward a milestone. You may ONLY pick from the numbered search results you are given.',
-  'Pick the 3 to 5 results that are the most concrete and doable. Skip results that are off topic, ads, or lists with nothing to act on. If fewer than 3 are good, return fewer.',
+  'Each result is tagged with the lane it came from and the kind of page it is. The lanes are a loop: learn the field (overview, documents), try it (practice), talk to people doing it (community), go see it (events), and apply.',
+  'Pick the 3 to 5 results that are the most concrete and doable. Take at most 2 from one lane so the day has a mix. Skip results that are off topic, ads, or lists with nothing to act on. If fewer than 3 are good, return fewer.',
   'For each step:',
   '- url: copy the result URL exactly, character for character. Never write a URL that is not in the results.',
   '- title: one short instruction starting with a verb, saying what to do with that page. Use only facts in the result title and text. Do not add dates, prices, or names that are not there.',
-  '- type: read (an article, book, or guide), attend (an event, class, or meetup), apply (a program, job, or form), contact (a person or organization to reach), practice (something to do hands on).',
+  '- type, following the lane: read for overview and documents (start the title with Watch when the kind is video), practice for practice (something to do hands on), contact for community (ask one question of someone already on this path), attend for events (one session they could go to in the next few weeks), apply for apply.',
   '- source: the name of the site or organization.',
-  'Prefer a mix of types. Prefer things in or near their city.',
+  'Prefer things in or near their city.',
 ].join('\n');
 
 function pickPrompt({ self, oddie, milestone, today, results }) {
@@ -150,7 +170,7 @@ function pickPrompt({ self, oddie, milestone, today, results }) {
     milestone ? `Milestone: ${milestone.title}` : 'They have reached every milestone and want to go deeper.',
     '',
     'SEARCH RESULTS',
-    ...results.map((r, i) => `[${i + 1}] ${r.title}\nURL: ${r.url}\n${r.snippet}`),
+    ...results.map((r, i) => `[${i + 1}] (lane: ${r.lane}, kind: ${r.kind}) ${r.title}\nURL: ${r.url}\n${r.snippet}`),
   ].join('\n');
 }
 

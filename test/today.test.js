@@ -1,43 +1,53 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const { startApp } = require('./helpers');
-const { keepRealSteps, urlKey } = require('../src/today');
+const { keepRealSteps } = require('../src/today');
+const { HttpError } = require('../src/errors');
+const research = require('../src/research');
+
+const PLAN = [
+  { lane: 'events', query: 'portfolio review events New York' },
+  { lane: 'overview', query: 'how to get started with design portfolios for beginners' },
+  { lane: 'apply', query: 'junior designer programs accepting applications New York' },
+];
 
 const RESULTS = {
-  classes: [
-    { title: 'Violin repair weekend intensive', url: 'https://example.org/classes/repair-weekend', snippet: 'Two day class.' },
-    { title: 'Luthier meetup', url: 'https://example.org/meetups/luthiers/', snippet: 'Monthly meetup.' },
+  [PLAN[0].query]: [
+    { title: 'Portfolio review night', url: 'https://example.org/events/portfolio-night', snippet: 'Monthly review.' },
+    { title: 'Designer meetup', url: 'https://example.org/meetups/designers/', snippet: 'Meets weekly.' },
   ],
-  reading: [
-    { title: 'How bass bars work', url: 'https://example.com/bass-bars', snippet: 'A guide.' },
-    { title: 'Luthier meetup', url: 'https://example.org/meetups/luthiers/', snippet: 'Duplicate of the meetup.' },
+  [PLAN[1].query]: [
+    { title: 'How to build a portfolio', url: 'https://example.com/portfolio-guide', snippet: 'A guide.' },
+    { title: 'Designer meetup', url: 'https://example.org/meetups/designers/?utm_source=x', snippet: 'Same meetup, tracked link.' },
   ],
-  apply: [{ title: 'Apprentice program', url: 'https://example.net/apprentice?year=2026', snippet: 'Applications open.' }],
+  [PLAN[2].query]: [{ title: 'Studio apprenticeship', url: 'https://example.net/apprentice?year=2026', snippet: 'Applications open.' }],
 };
 
-// Gemini stand-in: answers the query call, then the pick call with `picks`.
-function fakeGemini(picks) {
+// Gemini stand-in: answers the plan call with PLAN, then the pick call with `picks`.
+// Pass an Error for either to make that call fail.
+function fakeGemini(picks, plan = PLAN) {
   const calls = [];
   return {
     calls,
     configured: true,
     async generateJson(options) {
       calls.push(options);
-      if (options.task === 'today.queries') return { data: { queries: ['classes', 'reading', 'apply'] } };
-      return { data: { steps: picks } };
+      const answer = options.task === 'today.queries' ? plan : picks;
+      if (answer instanceof Error) throw answer;
+      return { data: options.task === 'today.queries' ? { queries: answer } : { steps: answer } };
     },
   };
 }
 
 // Nimble stand-in. `behaviour` maps a query to results, an Error, or 'hang'.
 function fakeNimble(behaviour = RESULTS) {
-  const queries = [];
+  const searches = [];
   return {
-    queries,
+    searches,
     configured: true,
-    search(query, { signal }) {
-      queries.push(query);
-      const outcome = behaviour[query];
+    search(params, { signal, lane }) {
+      searches.push({ ...params, lane });
+      const outcome = behaviour[params.query];
       if (outcome === 'hang') {
         return new Promise((resolve, reject) => signal.addEventListener('abort', () => reject(new Error('aborted'))));
       }
@@ -48,10 +58,14 @@ function fakeNimble(behaviour = RESULTS) {
 }
 
 const GOOD_PICKS = [
-  { type: 'attend', title: 'Sign up for the repair weekend', url: 'https://example.org/classes/repair-weekend', source: 'Example Org' },
-  { type: 'read', title: 'Read the bass bar guide', url: 'https://example.com/bass-bars', source: 'Example' },
-  { type: 'apply', title: 'Apply to the apprentice program', url: 'https://example.net/apprentice?year=2026', source: 'Example Net' },
+  { type: 'attend', title: 'Go to the portfolio review night', url: 'https://example.org/events/portfolio-night', source: 'Example Org' },
+  { type: 'read', title: 'Read the portfolio guide', url: 'https://example.com/portfolio-guide', source: 'Example' },
+  { type: 'apply', title: 'Apply to the studio apprenticeship', url: 'https://example.net/apprentice?year=2026', source: 'Example Net' },
 ];
+
+const down = new Error('nimble 500');
+const ALL_DOWN = Object.fromEntries(PLAN.map((p) => [p.query, down]));
+const ALL_HANG = Object.fromEntries(PLAN.map((p) => [p.query, 'hang']));
 
 test('today records the pick and returns steps for the next unreached milestone', async (t) => {
   const gemini = fakeGemini(GOOD_PICKS);
@@ -64,10 +78,10 @@ test('today records the pick and returns steps for the next unreached milestone'
   assert.equal(res.json.pick.oddie_id, 1);
   assert.equal(res.json.milestone.title, 'Publish a portfolio with five projects');
   assert.equal(res.json.steps.length, 3);
-  assert.deepEqual(nimble.queries, ['classes', 'reading', 'apply']);
-  assert.match(gemini.calls[0].contents, /New York, NY/, 'the query prompt carries the city');
+  assert.deepEqual(res.json.lanes, ['events', 'overview', 'apply']);
+  assert.match(gemini.calls[0].contents, /New York, NY/, 'the plan prompt carries the city');
   assert.match(gemini.calls[0].contents, /Today is \d{4}-\d{2}-\d{2}/, 'and the date');
-  assert.match(gemini.calls[1].contents, /https:\/\/example\.org\/classes\/repair-weekend/, 'the pick prompt lists Nimble results');
+  assert.match(gemini.calls[1].contents, /\(lane: events, kind: event\) Portfolio review night/, 'the pick prompt lists Nimble results by lane');
 
   for (const step of res.json.steps) {
     assert.equal(step.milestone_id, res.json.milestone.id);
@@ -80,11 +94,30 @@ test('today records the pick and returns steps for the next unreached milestone'
   assert.equal(state.history.at(-1).oddie_id, 1);
 });
 
+test("each lane searches with the team's Nimble settings", async (t) => {
+  const nimble = fakeNimble();
+  const app = await startApp({ gemini: fakeGemini(GOOD_PICKS), nimble });
+  t.after(app.close);
+  await app.call('POST', '/api/today', { oddie_id: 1 });
+
+  assert.deepEqual(nimble.searches[0], {
+    query: PLAN[0].query,
+    max_results: 4,
+    search_depth: 'lite',
+    time_range: 'month',
+    output_format: 'plain_text',
+    lane: 'events',
+  });
+  assert.equal(nimble.searches[1].lane, 'overview');
+  assert.equal(nimble.searches[1].time_range, undefined);
+  assert.deepEqual(research.buildSearch('documents', 'type study guide').content_type, ['documents']);
+});
+
 test('steps with URLs Nimble did not return are dropped', async (t) => {
   const gemini = fakeGemini([
     GOOD_PICKS[0],
     { type: 'attend', title: 'Go to an invented workshop', url: 'https://made-up.example/workshop', source: 'Nowhere' },
-    { type: 'read', title: 'Read a page on the right site but a made up path', url: 'https://example.org/classes/other', source: 'Example Org' },
+    { type: 'read', title: 'Read a page on the right site but a made up path', url: 'https://example.org/events/other', source: 'Example Org' },
     { type: 'contact', title: 'Not even a link', url: 'call them', source: 'Nobody' },
     GOOD_PICKS[1],
   ]);
@@ -95,26 +128,63 @@ test('steps with URLs Nimble did not return are dropped', async (t) => {
   assert.equal(res.status, 200);
   assert.deepEqual(
     res.json.steps.map((s) => s.url),
-    ['https://example.org/classes/repair-weekend', 'https://example.com/bass-bars']
+    ['https://example.org/events/portfolio-night', 'https://example.com/portfolio-guide']
   );
 });
 
-test('if every suggested step is invented, there are no steps and no fallback', async (t) => {
+test('if every suggested step is invented, the lane rules pick from the real results instead', async (t) => {
   const gemini = fakeGemini([{ type: 'read', title: 'Read this', url: 'https://made-up.example/a', source: 'x' }]);
   const app = await startApp({ gemini, nimble: fakeNimble() });
   t.after(app.close);
 
   const res = await app.call('POST', '/api/today', { oddie_id: 1 });
-  assert.equal(res.status, 502);
-  assert.equal(res.json.error, 'no_real_steps');
-  assert.equal(res.json.retryable, true);
-  assert.equal(app.db.prepare('SELECT COUNT(*) AS n FROM step').get().n, 0);
+  assert.equal(res.status, 200);
+  const realUrls = Object.values(RESULTS).flat().map((r) => r.url);
+  assert.ok(res.json.steps.length >= 2);
+  for (const step of res.json.steps) assert.ok(realUrls.includes(step.url), `${step.url} came from Nimble`);
+  assert.deepEqual(
+    res.json.steps.map((s) => [s.type, s.title]),
+    [
+      ['read', 'Read "How to build a portfolio"'],
+      ['attend', 'Check out: Portfolio review night'],
+      ['apply', 'Apply: Studio apprenticeship'],
+    ]
+  );
+});
+
+test('if Gemini is down, the lane rules plan the searches and pick the steps', async (t) => {
+  const failed = new HttpError(502, 'gemini_failed', 'The model did not answer.');
+  const nimble = {
+    searches: [],
+    configured: true,
+    async search(params, { lane }) {
+      this.searches.push({ lane, query: params.query });
+      return [{ title: `${lane} result`, url: `https://example.org/${lane}`, snippet: '' }];
+    },
+  };
+  const app = await startApp({ gemini: fakeGemini(failed, failed), nimble });
+  t.after(app.close);
+
+  const res = await app.call('POST', '/api/today', { oddie_id: 1 });
+  assert.equal(res.status, 200);
+  assert.deepEqual(nimble.searches, [
+    { lane: 'overview', query: 'how to publish a portfolio with five projects for beginners' },
+    { lane: 'community', query: 'publish a portfolio with five projects community forum where beginners ask questions' },
+    { lane: 'events', query: 'publish a portfolio with five projects workshops classes events New York, NY' },
+  ]);
+  assert.deepEqual(
+    res.json.steps.map((s) => [s.type, s.url]),
+    [
+      ['read', 'https://example.org/overview'],
+      ['contact', 'https://example.org/community'],
+      ['attend', 'https://example.org/events'],
+    ]
+  );
 });
 
 test('a Nimble failure is an error with retry, never made-up steps', async (t) => {
-  const down = new Error('nimble 500');
   const gemini = fakeGemini(GOOD_PICKS);
-  const app = await startApp({ gemini, nimble: fakeNimble({ classes: down, reading: down, apply: down }) });
+  const app = await startApp({ gemini, nimble: fakeNimble(ALL_DOWN) });
   t.after(app.close);
 
   const res = await app.call('POST', '/api/today', { oddie_id: 1 });
@@ -130,10 +200,7 @@ test('a Nimble failure is an error with retry, never made-up steps', async (t) =
 
 test('a Nimble timeout is reported as a timeout', async (t) => {
   t.mock.timers.enable({ apis: ['setTimeout'] });
-  const app = await startApp({
-    gemini: fakeGemini(GOOD_PICKS),
-    nimble: fakeNimble({ classes: 'hang', reading: 'hang', apply: 'hang' }),
-  });
+  const app = await startApp({ gemini: fakeGemini(GOOD_PICKS), nimble: fakeNimble(ALL_HANG) });
   t.after(app.close);
 
   const pending = app.call('POST', '/api/today', { oddie_id: 1 });
@@ -144,12 +211,13 @@ test('a Nimble timeout is reported as a timeout', async (t) => {
   assert.equal(res.status, 504);
   assert.equal(res.json.error, 'nimble_timeout');
   assert.equal(res.json.retryable, true);
+  assert.equal(app.db.prepare('SELECT COUNT(*) AS n FROM step').get().n, 0);
 });
 
 test('one failed search out of three still gives steps from the others', async (t) => {
   const app = await startApp({
     gemini: fakeGemini(GOOD_PICKS),
-    nimble: fakeNimble({ ...RESULTS, apply: new Error('nimble 500') }),
+    nimble: fakeNimble({ ...RESULTS, [PLAN[2].query]: down }),
   });
   t.after(app.close);
 
@@ -209,20 +277,55 @@ test('today needs a real oddie and a Nimble key', async (t) => {
   assert.equal(noKey.json.error, 'nimble_not_configured');
 });
 
+test("a step's page can be read in the app, but only a saved step's", async (t) => {
+  const extracted = [];
+  const nimble = {
+    ...fakeNimble(),
+    async extract(url) {
+      extracted.push(url);
+      if (url.includes('apprentice')) return { ok: false, markdown: '' };
+      return { ok: true, markdown: '# The Guide\n\nStart with five projects.', url };
+    },
+  };
+  const app = await startApp({ gemini: fakeGemini(GOOD_PICKS), nimble });
+  t.after(app.close);
+  const { steps } = (await app.call('POST', '/api/today', { oddie_id: 1 })).json;
+
+  const guide = steps.find((s) => s.type === 'read');
+  const doc = await app.call('POST', `/api/steps/${guide.id}/read`);
+  assert.equal(doc.status, 200);
+  assert.equal(doc.json.title, 'The Guide');
+  assert.match(doc.json.markdown, /Start with five projects/);
+  assert.equal(doc.json.truncated, false);
+  assert.deepEqual(extracted, ['https://example.com/portfolio-guide']);
+
+  const blocked = await app.call('POST', `/api/steps/${steps.find((s) => s.type === 'apply').id}/read`);
+  assert.equal(blocked.status, 502);
+  assert.equal(blocked.json.error, 'document_unavailable');
+
+  assert.equal((await app.call('POST', '/api/steps/999/read')).status, 404);
+});
+
 test('keepRealSteps matches URLs loosely but saves the URL Nimble gave', () => {
-  const results = [{ title: 'Meetup', url: 'https://Example.org/meetups/luthiers/', snippet: '' }];
+  const resources = [research.toResource({ title: 'Meetup', url: 'https://Example.org/meetups/designers/?utm_source=news', snippet: '' }, 'events')];
   const kept = keepRealSteps(
     [
-      { type: 'attend', title: 'Go to the meetup', url: 'https://example.org/meetups/luthiers#rsvp', source: '' },
-      { type: 'attend', title: 'Same meetup again', url: 'https://example.org/meetups/luthiers/', source: 'dupe' },
-      { type: 'dance', title: 'Unknown type falls back to read', url: 'https://example.org/meetups/luthiers/x', source: '' },
+      { type: 'attend', title: 'Go to the meetup', url: 'https://example.org/meetups/designers#rsvp', source: '' },
+      { type: 'attend', title: 'Same meetup again', url: 'https://example.org/meetups/designers/', source: 'dupe' },
+      { type: 'dance', title: 'A made up path', url: 'https://example.org/meetups/designers/x', source: '' },
       null,
     ],
-    results
+    resources
   );
   assert.equal(kept.length, 1);
-  assert.equal(kept[0].url, 'https://Example.org/meetups/luthiers/');
+  assert.equal(kept[0].url, 'https://Example.org/meetups/designers/?utm_source=news');
   assert.equal(kept[0].source, 'example.org', 'falls back to the host when the model gives no source');
-  assert.equal(urlKey('javascript:alert(1)'), null);
-  assert.equal(urlKey('not a url'), null);
+
+  const unknownType = keepRealSteps([{ type: 'dance', title: 'Go', url: 'https://example.org/meetups/designers', source: '' }], resources);
+  assert.equal(unknownType[0].type, 'attend', "an unknown type becomes the lane's type");
+
+  assert.equal(research.normalizeUrl('javascript:alert(1)'), null);
+  assert.equal(research.normalizeUrl('not a url'), null);
+  assert.equal(research.toResource({ title: 'Talk', url: 'https://www.youtube.com/watch?v=1' }, 'overview').kind, 'video');
+  assert.equal(research.toResource({ title: 'Guide', url: 'https://example.org/guide.pdf' }, 'overview').kind, 'document');
 });

@@ -15,6 +15,7 @@
   },
   "dependencies": {
     "@google/genai": "^2.28.0",
+    "@nimble-way/nimble-js": "^1.5.0",
     "@sentry/browser": "^11.6.0",
     "@sentry/node": "^11.6.0",
     "better-sqlite3": "^13.0.3",

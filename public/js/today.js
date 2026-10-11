@@ -16,12 +16,16 @@ export function initToday(panel, { refresh, onError }) {
     stepEmpty: $('[data-role="step-empty"]'),
     steps: $('[data-role="step-list"]'),
     refreshSteps: $('[data-action="today-refresh"]'),
+    reflect: $('[data-role="today-reflect"]'),
     history: $('[data-role="history-strip"]'),
   };
 
   let state = null;
   let busy = false;
   let lastRequest = null; // what "Try again" repeats
+  // Pages opened for reading in the app, by step id: { status, text }
+  const readers = new Map();
+  const READABLE_TYPES = ['read', 'practice'];
 
   function element(tag, className, text) {
     const node = document.createElement(tag);
@@ -87,12 +91,33 @@ export function initToday(panel, { refresh, onError }) {
         link.rel = 'noopener noreferrer';
 
         item.append(label, link);
+
+        // Articles and guides can be read right here. Events, communities and
+        // applications open in the browser.
+        if (READABLE_TYPES.includes(step.type)) {
+          const reader = readers.get(step.id);
+          const read = element('button', 'step__read', reader ? 'Close reader' : 'Read here');
+          read.type = 'button';
+          read.dataset.action = 'read-step';
+          read.dataset.stepId = step.id;
+          read.setAttribute('aria-expanded', Boolean(reader));
+          item.append(read);
+          if (reader) {
+            const box = element('div', `step__reader step__reader--${reader.status}`, reader.text);
+            box.dataset.role = 'step-reader';
+            box.dataset.status = reader.status;
+            box.setAttribute('role', reader.status === 'error' ? 'alert' : 'status');
+            box.tabIndex = 0;
+            item.append(box);
+          }
+        }
         return item;
       })
     );
 
     const has = state.today_steps.length > 0;
     els.refreshSteps.hidden = !has;
+    els.reflect.hidden = !has;
     els.refreshSteps.disabled = busy;
     els.stepEmpty.hidden = has;
     els.stepEmpty.textContent = oddie
@@ -170,6 +195,33 @@ export function initToday(panel, { refresh, onError }) {
 
   els.refreshSteps.addEventListener('click', () => {
     if (state.today_pick) choose(state.today_pick.oddie_id, true);
+  });
+
+  els.steps.addEventListener('click', async (event) => {
+    const button = event.target.closest('[data-action="read-step"]');
+    if (!button) return;
+    const id = Number(button.dataset.stepId);
+    const refocus = () => els.steps.querySelector(`[data-action="read-step"][data-step-id="${id}"]`)?.focus();
+    if (readers.has(id)) {
+      readers.delete(id);
+      render(state);
+      refocus();
+      return;
+    }
+    readers.set(id, { status: 'loading', text: 'Loading the page…' });
+    render(state);
+    refocus();
+    try {
+      const doc = await api.readStep(id);
+      if (!readers.has(id)) return; // closed while loading
+      const note = doc.truncated ? '\n\n[Cut short here. Open the link for the rest.]' : '';
+      readers.set(id, { status: 'ready', text: doc.markdown + note });
+    } catch (error) {
+      if (!readers.has(id)) return;
+      readers.set(id, { status: 'error', text: error.message });
+    }
+    render(state);
+    refocus();
   });
 
   els.steps.addEventListener('change', async (event) => {

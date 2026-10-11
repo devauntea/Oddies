@@ -1,4 +1,4 @@
-import { Stack, useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 import { useMemo } from 'react';
 
 import {
@@ -6,7 +6,9 @@ import {
   ResearchPackView,
   type Level,
   type ResearchRequest,
+  type ResearchTone,
 } from '@/features/research';
+import { findWorld } from '@/features/world-map';
 
 const LEVELS: Level[] = ['beginner', 'intermediate', 'advanced'];
 
@@ -28,10 +30,13 @@ export default function ResearchScreen() {
     [params.topic, params.level, params.goal, params.pathId],
   );
 
-  return (
-    <>
-      <Stack.Screen options={{ title: request.topic }} />
-      <ResearchPackView request={request} onOpenResource={openResource} />
-    </>
-  );
+  // Opened from a world on the map: wear that world's colors.
+  const tone = useMemo<ResearchTone | undefined>(() => {
+    const world = findWorld(params.pathId);
+    return world
+      ? { label: `${world.name} · ${world.personality}`, accent: world.accent, soft: world.patch }
+      : undefined;
+  }, [params.pathId]);
+
+  return <ResearchPackView request={request} onOpenResource={openResource} tone={tone} />;
 }

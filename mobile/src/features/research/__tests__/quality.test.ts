@@ -28,8 +28,10 @@ describe('quality rules', () => {
     expect(capPerHost(items, 2).map((x) => x.i)).toEqual([0, 1, 2, 4]);
   });
 
-  it('asks Nimble to exclude blocked domains on every lane', () => {
+  it('asks Nimble to exclude blocked domains on every open-web lane', () => {
     for (const planned of buildQueryPlan(request)) {
+      // The videos lane is an allow-list (YouTube only), so a block list would be moot.
+      if (planned.query.include_domains) continue;
       expect(planned.query.exclude_domains).toContain('pinterest.com');
     }
   });

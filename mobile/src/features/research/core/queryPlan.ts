@@ -16,6 +16,8 @@ export interface SearchQuery {
   time_range?: 'week' | 'month' | 'year';
   /** Nimble allows at most 50. */
   exclude_domains?: string[];
+  /** Only return results from these domains. */
+  include_domains?: string[];
   country?: string;
   locale?: string;
 }
@@ -38,11 +40,8 @@ export function buildQueryPlan(request: NormalizedResearchRequest): PlannedSearc
   const { topic, level, goal, lanes, country, locale } = request;
   const lvl = LEVEL_PHRASE[level];
   const forGoal = goal ? ` to ${goal}` : '';
-  const geo = {
-    exclude_domains: [...BLOCKED_DOMAINS],
-    ...(country && { country }),
-    ...(locale && { locale }),
-  };
+  const geoOnly = { ...(country && { country }), ...(locale && { locale }) };
+  const geo = { exclude_domains: [...BLOCKED_DOMAINS], ...geoOnly };
 
   const plans: Record<Lane, PlannedSearch> = {
     overview: {
@@ -65,6 +64,18 @@ export function buildQueryPlan(request: NormalizedResearchRequest): PlannedSearc
         search_depth: 'lite',
         content_type: ['documents'],
         ...geo,
+      },
+    },
+    videos: {
+      lane: 'videos',
+      kind: 'video',
+      query: {
+        query: `${topic} ${lvl} lesson${forGoal}`,
+        max_results: 4,
+        search_depth: 'lite',
+        // An allow-list makes the junk-domain block list moot.
+        include_domains: ['youtube.com'],
+        ...geoOnly,
       },
     },
     practice: {

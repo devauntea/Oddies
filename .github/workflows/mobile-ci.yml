@@ -1,12 +1,13 @@
 name: Mobile CI
 
 # Checks for the Expo app in /mobile. Separate from the web app's Fly deploy workflow.
+# The app also bundles the shared art and layout in /assets, so changes there are checked too.
 on:
   pull_request:
-    paths: ['mobile/**', '.github/workflows/mobile-ci.yml']
+    paths: ['mobile/**', 'assets/**', '.github/workflows/mobile-ci.yml']
   push:
     branches: [main]
-    paths: ['mobile/**', '.github/workflows/mobile-ci.yml']
+    paths: ['mobile/**', 'assets/**', '.github/workflows/mobile-ci.yml']
 
 concurrency:
   group: mobile-ci-${{ github.ref }}

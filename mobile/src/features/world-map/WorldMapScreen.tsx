@@ -3,6 +3,7 @@ import { useCallback, useState } from 'react';
 import { Pressable, StyleSheet, Text, View, type LayoutChangeEvent } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { DailyCompanion } from '@/features/companion';
 import { colors, radius, scene, spacing, typography } from '@/theme/tokens';
 
 import { sceneLayout } from './layout';
@@ -39,6 +40,7 @@ export function WorldMapScreen() {
   const openWorld = useCallback((id: WorldId) => {
     router.push({ pathname: '/world/[id]', params: { id } });
   }, []);
+  const openYou = useCallback(() => router.push('/you'), []);
 
   const placement = size ? placeMap(size, insets.top, insets.bottom) : null;
 
@@ -49,6 +51,7 @@ export function WorldMapScreen() {
         <WorldMap
           scale={placement.scale}
           onEnterWorld={openWorld}
+          onPressSelf={openYou}
           style={[styles.map, { left: placement.left, top: placement.top }]}
         />
       ) : null}
@@ -58,6 +61,11 @@ export function WorldMapScreen() {
         </Text>
         <Text style={styles.hint}>Tap a world to meet another you</Text>
       </View>
+      {/* Sits above the footer button: footer padding + its 44pt height + a gap. */}
+      <DailyCompanion
+        bottom={insets.bottom + spacing.md + 44 + spacing.md}
+        onOpenWorld={openWorld}
+      />
       <View style={[styles.footer, { paddingBottom: insets.bottom + spacing.md }]}>
         <Pressable
           accessibilityRole="button"
@@ -80,6 +88,9 @@ const styles = StyleSheet.create({
   lowerEdge: {
     ...StyleSheet.absoluteFill,
     top: '50%',
+    left: 0,
+    right: 0,
+    bottom: 0,
     backgroundColor: canvas.edgeBottom,
   },
   map: {

@@ -1,9 +1,9 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
-import { researchHref, type Level } from '@/features/research';
-import { colors, radius, spacing, typography } from '@/theme/tokens';
+import { PillButton, researchHref, type Level } from '@/features/research';
+import { colors, radius, spacing, touch, typography } from '@/theme/tokens';
 
 /**
  * Free-text branch picker, reached from the home map's "Or name your own path". Each world on the
@@ -24,63 +24,115 @@ export default function PickBranch() {
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>What feels exciting today?</Text>
-
-      <View style={styles.row}>
-        {SAMPLE_BRANCHES.map((branch) => (
-          <Pressable key={branch} style={styles.chip} onPress={() => go(branch)}>
-            <Text style={styles.chipText}>{branch}</Text>
-          </Pressable>
-        ))}
+    <ScrollView
+      style={styles.screen}
+      contentContainerStyle={styles.content}
+      keyboardShouldPersistTaps="handled"
+    >
+      <View style={styles.intro}>
+        <Text accessibilityRole="header" style={styles.title}>
+          What feels exciting today?
+        </Text>
+        <Text style={styles.lead}>
+          Name a path you&apos;re curious about. We&apos;ll find real things to read, watch and try.
+        </Text>
       </View>
 
-      <TextInput
-        value={topic}
-        onChangeText={setTopic}
-        onSubmitEditing={() => go(topic)}
-        placeholder="Or type your own branch…"
-        placeholderTextColor={colors.textMuted}
-        returnKeyType="go"
-        style={styles.input}
+      <View style={styles.section}>
+        <Text style={styles.overline}>Try one of these</Text>
+        <View style={styles.row}>
+          {SAMPLE_BRANCHES.map((branch) => (
+            <Pressable
+              key={branch}
+              accessibilityRole="button"
+              onPress={() => go(branch)}
+              style={({ pressed }) => [styles.chip, pressed && styles.chipPressed]}
+            >
+              <Text style={styles.chipText}>{branch}</Text>
+            </Pressable>
+          ))}
+        </View>
+      </View>
+
+      <View style={styles.section}>
+        <Text style={styles.overline}>Or name your own</Text>
+        <TextInput
+          value={topic}
+          onChangeText={setTopic}
+          onSubmitEditing={() => go(topic)}
+          placeholder="e.g. learning to DJ"
+          placeholderTextColor={colors.textMuted}
+          returnKeyType="go"
+          accessibilityLabel="Your own path"
+          style={styles.input}
+        />
+      </View>
+
+      <View style={styles.section}>
+        <Text style={styles.overline}>Where you&apos;re starting</Text>
+        <View style={styles.row}>
+          {LEVELS.map((value) => {
+            const selected = level === value;
+            return (
+              <Pressable
+                key={value}
+                onPress={() => setLevel(value)}
+                accessibilityRole="button"
+                accessibilityState={{ selected }}
+                style={[styles.chip, selected && styles.chipSelected]}
+              >
+                <Text style={[styles.chipText, selected && styles.chipTextSelected]}>{value}</Text>
+              </Pressable>
+            );
+          })}
+        </View>
+      </View>
+
+      <PillButton
+        primary
+        label="Find real steps"
+        disabled={topic.trim().length < 2}
+        onPress={() => go(topic)}
       />
-
-      <View style={styles.row}>
-        {LEVELS.map((value) => (
-          <Pressable
-            key={value}
-            onPress={() => setLevel(value)}
-            accessibilityState={{ selected: level === value }}
-            style={[styles.chip, level === value && styles.chipSelected]}
-          >
-            <Text style={styles.chipText}>{value}</Text>
-          </Pressable>
-        ))}
-      </View>
-    </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: spacing.lg, gap: spacing.lg },
-  title: { ...typography.title, color: colors.text },
+  screen: { flex: 1, backgroundColor: colors.background },
+  content: {
+    paddingHorizontal: spacing.lg + spacing.xs,
+    paddingTop: spacing.sm,
+    paddingBottom: spacing.xxl * 2,
+    gap: spacing.xl,
+  },
+  intro: { gap: spacing.sm },
+  title: { ...typography.display, color: colors.text },
+  lead: { ...typography.reading, color: colors.textMuted },
+  section: { gap: spacing.md },
+  overline: { ...typography.overline, color: colors.textMuted },
   row: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   chip: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
+    minHeight: touch.min,
+    paddingHorizontal: spacing.lg,
+    alignItems: 'center',
+    justifyContent: 'center',
     borderRadius: radius.pill,
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: colors.border,
     backgroundColor: colors.surface,
   },
-  chipSelected: { borderColor: colors.pathCurrent },
-  chipText: { ...typography.body, color: colors.text },
+  chipPressed: { backgroundColor: colors.accentSoft },
+  chipSelected: { borderColor: colors.text, backgroundColor: colors.accentSoft },
+  chipText: { ...typography.button, fontWeight: '400', color: colors.text },
+  chipTextSelected: { fontWeight: '700' },
   input: {
-    ...typography.body,
+    ...typography.reading,
+    minHeight: touch.min + spacing.sm,
+    paddingHorizontal: spacing.lg,
     color: colors.text,
-    padding: spacing.md,
-    borderRadius: radius.md,
-    borderWidth: 1,
+    borderRadius: radius.card,
+    borderWidth: 1.5,
     borderColor: colors.border,
     backgroundColor: colors.surface,
   },

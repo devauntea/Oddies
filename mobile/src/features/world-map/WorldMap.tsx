@@ -14,6 +14,7 @@ import {
   type ViewStyle,
 } from 'react-native';
 
+import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { colors, radius, spacing, typography } from '@/theme/tokens';
 
 import { findWorld, sceneLayout } from './layout';
@@ -27,7 +28,6 @@ import {
 } from './math';
 import { LAYER_SOURCES } from './sources';
 import type { Rect, SceneLayer, WorldId } from './types';
-import { useReducedMotion } from './useReducedMotion';
 
 type AnimatedStyle = ComponentProps<typeof Animated.View>['style'];
 type Layer = { layer: SceneLayer; source: ImageSourcePropType; rect: Rect };
@@ -73,6 +73,8 @@ type Props = {
   scale: number;
   /** Called when the zoom into a world has finished. Navigate from here. */
   onEnterWorld: (id: WorldId) => void;
+  /** Called after the present self's little hop when she is tapped. */
+  onPressSelf?: () => void;
   style?: StyleProp<ViewStyle>;
 };
 
@@ -82,7 +84,7 @@ type Props = {
  * Tap a world: it lifts, the camera zooms into it, then `onEnterWorld` fires. When the screen
  * is focused again the camera eases back out. Reduce Motion keeps the scene still.
  */
-export function WorldMap({ scale: k, onEnterWorld, style }: Props) {
+export function WorldMap({ scale: k, onEnterWorld, onPressSelf, style }: Props) {
   const reduceMotion = useReducedMotion();
   const [arrive] = useState(() => new Animated.Value(0));
   const [bob] = useState(() => new Animated.Value(0));
@@ -165,12 +167,16 @@ export function WorldMap({ scale: k, onEnterWorld, style }: Props) {
   );
 
   const sayHello = useCallback(() => {
-    if (reduceMotion || busy.current) return;
+    if (busy.current) return;
+    if (reduceMotion) {
+      onPressSelf?.();
+      return;
+    }
     hello.setValue(0);
     const up = tween(hello, 1, motion.hello.durationMs * 0.4, Easing.out(Easing.quad));
     const down = tween(hello, 0, motion.hello.durationMs * 0.6, Easing.inOut(Easing.quad));
-    Animated.sequence([up, down]).start();
-  }, [hello, reduceMotion]);
+    Animated.sequence([up, down]).start(() => onPressSelf?.());
+  }, [hello, onPressSelf, reduceMotion]);
 
   const focusWorld = selected ? findWorld(selected) : undefined;
 
@@ -283,6 +289,7 @@ export function WorldMap({ scale: k, onEnterWorld, style }: Props) {
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="You, today"
+          accessibilityHint="Says hello"
           onPress={sayHello}
           style={[styles.hit, positionOf(scaleRect(character.hit, k))]}
         />

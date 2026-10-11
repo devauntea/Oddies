@@ -42,12 +42,23 @@ Without `NIMBLE_API_KEY` the app runs on mock data, so you can build UI without 
 ```
 src/
   app/                 Expo Router routes (screens + API routes). Keep these thin.
+    index.tsx          Home: the world map
+    world/[id].tsx     A world's introduction
+    you.tsx            The present self up close
     api/               Server-only endpoints: research+api.ts, document+api.ts
-    research/          Research screen and in-app reader
+    research/          Branch picker, research screen and in-app reader
   features/
+    world-map/         The layered home map and world intros. See its README.
+    character/         The layered present self: idle, talking, hello. See its README.
     research/          The research & task tool. See its README.
-  theme/tokens.ts      Colors, spacing, type. The one place DESIGN.md will change.
+  hooks/               Shared hooks (useReducedMotion)
+  theme/tokens.ts      Colors, spacing, type. Mirrors ../assets/tokens.json.
 ```
+
+Art, the scene layout and design tokens come from the repo's shared `../assets` folder, which the
+web app uses too. Metro bundles it through `watchFolders` in `metro.config.js`. See
+[../assets/README.md](../assets/README.md) and the motion plan in
+[../assets/docs/animation.md](../assets/docs/animation.md).
 
 New features go in `src/features/<name>/` with their own `index.ts`, so teams can work side by
 side without editing each other's files. See [CONTRIBUTING.md](CONTRIBUTING.md).

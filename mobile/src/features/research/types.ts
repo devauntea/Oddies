@@ -9,15 +9,16 @@ export type Level = 'beginner' | 'intermediate' | 'advanced';
 
 /**
  * A "lane" is one angle of research on a topic. Each lane becomes one Nimble search.
- * Lanes map onto Designing Your Life ideas: learn the field (overview, documents), try it
+ * Lanes map onto Designing Your Life ideas: learn the field (overview, documents, videos), try it
  * (practice), talk to people doing it (community = prototype conversations), and go see it
  * (events = prototype experiences).
  */
-export type Lane = 'overview' | 'documents' | 'practice' | 'community' | 'events';
+export type Lane = 'overview' | 'documents' | 'videos' | 'practice' | 'community' | 'events';
 
 export const ALL_LANES: readonly Lane[] = [
   'overview',
   'documents',
+  'videos',
   'practice',
   'community',
   'events',

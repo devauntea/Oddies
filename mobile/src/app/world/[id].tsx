@@ -1,8 +1,9 @@
 import { useLocalSearchParams } from 'expo-router';
 
-import { WorldIntro } from '@/features/world-map';
+import { WorldPathScreen } from '@/features/world-paths';
 
+/** A world's path, opened by zooming into that world on the home map. */
 export default function WorldScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  return <WorldIntro worldId={id} />;
+  return <WorldPathScreen worldId={id} />;
 }

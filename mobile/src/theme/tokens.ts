@@ -44,6 +44,11 @@ export const colors = {
   border: '#E8DCCB',
   accent: brand.iris,
   success: brand.emerald,
+  /** Selected chips, notices and pressed rows: a pale iris (the web app's --iris-soft). */
+  accentSoft: '#E6DEF5',
+  /** Text on plum buttons. */
+  onPrimary: brand.ivory,
+
   /** "Current" path. */
   pathCurrent: '#4CAF6E',
   /** "Alternate" path. */
@@ -73,8 +78,38 @@ export const radius = { sm: 6, md: 12, card: 18, sheet: 26, pill: 999 } as const
 
 export const typography = {
   display: { fontFamily: fonts.display, fontSize: 30, fontWeight: '600', lineHeight: 36 },
+  /** Sheet and section titles (style.md §4: Fraunces 22-26). */
+  sheetTitle: { fontFamily: fonts.display, fontSize: 24, fontWeight: '600', lineHeight: 30 },
   title: { fontSize: 24, fontWeight: '700' },
   heading: { fontSize: 18, fontWeight: '700' },
   body: { fontSize: 15, fontWeight: '400', lineHeight: 21 },
+  /** Reading text: style.md asks for 16-17 with ~1.5 line spacing. */
+  reading: { fontSize: 16, fontWeight: '400', lineHeight: 24 },
+  bodyStrong: { fontSize: 16, fontWeight: '600', lineHeight: 22 },
+  /** Buttons and navigation (Nunito Sans 600, 15-16). */
+  button: { fontSize: 15, fontWeight: '600', lineHeight: 20 },
+  /** Supporting labels (13-14). */
+  label: { fontSize: 13, fontWeight: '600', lineHeight: 18 },
+  /** Small uppercase section labels, as on the world intro sheet. */
+  overline: {
+    fontSize: 12,
+    fontWeight: '700',
+    letterSpacing: 0.8,
+    textTransform: 'uppercase',
+  },
   caption: { fontSize: 12, fontWeight: '500' },
+} as const;
+
+/** Minimum touch target (style.md §8). */
+export const touch = { min: 44 } as const;
+
+/** Soft, light shadows in the meadow's shadow green (style.md §3: 8-12% opacity). */
+export const shadows = {
+  card: {
+    shadowColor: scene.shadow,
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 2,
+  },
 } as const;

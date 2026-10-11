@@ -11,13 +11,46 @@ export interface RawSearchResult {
 
 const VIDEO_HOSTS = ['youtube.com', 'youtu.be', 'vimeo.com', 'm.youtube.com'];
 const MAX_DESCRIPTION = 280;
+const FILE_EXTENSION = /\.(pdf|docx?|pptx?|xlsx?)$/i;
+
+/**
+ * True for links to files (PDF, Word, PowerPoint...) rather than web pages. These can't go through
+ * the in-app reader: the system browser's built-in viewer shows them properly instead.
+ */
+export function isFileUrl(url: string): boolean {
+  try {
+    return FILE_EXTENSION.test(new URL(url).pathname);
+  } catch {
+    return false;
+  }
+}
 
 function refineKind(kind: ResourceKind, url: string, source: string): ResourceKind {
   // Only refine generic results; community/event lanes keep their meaning even on YouTube.
   if (kind !== 'article' && kind !== 'document') return kind;
   if (VIDEO_HOSTS.includes(source)) return 'video';
-  if (/\.(pdf|docx?|pptx?)$/i.test(new URL(url).pathname)) return 'document';
+  if (isFileUrl(url)) return 'document';
   return kind;
+}
+
+/**
+ * Search snippets often arrive as markdown ("# Title ## Intro **Key** [link](/x)"). Cards show
+ * plain text, so strip the syntax, and drop a leading copy of the title, which is common.
+ */
+export function plainSnippet(text: string, title: string): string {
+  const plain = text
+    .replace(/!\[[^\]]*\]\([^)]*\)/g, '')
+    .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')
+    .replace(/(^|\s)#{1,6}\s+/g, '$1')
+    .replace(/(^|\n)\s*(?:[-*+]|\d+\.)\s+/g, '$1')
+    .replace(/\*\*|__|`/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+  const cleanTitle = title.trim();
+  if (cleanTitle && plain.toLowerCase().startsWith(cleanTitle.toLowerCase())) {
+    return plain.slice(cleanTitle.length).replace(/^[\s:–—-]+/, '');
+  }
+  return plain;
 }
 
 function truncate(text: string, max: number): string {
@@ -37,7 +70,7 @@ export function toResource(raw: RawSearchResult, lane: Lane, kind: ResourceKind)
     title,
     url,
     source,
-    description: truncate((raw.description ?? '').replace(/\s+/g, ' ').trim(), MAX_DESCRIPTION),
+    description: truncate(plainSnippet(raw.description ?? '', title), MAX_DESCRIPTION),
   };
 }
 

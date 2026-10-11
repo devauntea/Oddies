@@ -1,4 +1,5 @@
 import { parseResearchRequest } from '@/features/research/core/validate';
+import { createDeadLinkFinder } from '@/features/research/server/linkCheck';
 import { nimbleSearch } from '@/features/research/server/nimble';
 import {
   defaultResearchCache,
@@ -28,6 +29,7 @@ export async function POST(request: Request): Promise<Response> {
   try {
     const pack = await runResearch(parsed.value, {
       search: nimbleSearch(),
+      findDeadLinks: createDeadLinkFinder(),
       cache: defaultResearchCache,
       log: (message, error) => console.error(`[api/research] ${message}`, error),
     });

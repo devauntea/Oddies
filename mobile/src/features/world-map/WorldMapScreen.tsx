@@ -3,6 +3,7 @@ import { useCallback, useState } from 'react';
 import { Pressable, StyleSheet, Text, View, type LayoutChangeEvent } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { DailyCompanion } from '@/features/companion';
 import { colors, radius, scene, spacing, typography } from '@/theme/tokens';
 
 import { sceneLayout } from './layout';
@@ -60,6 +61,11 @@ export function WorldMapScreen() {
         </Text>
         <Text style={styles.hint}>Tap a world to meet another you</Text>
       </View>
+      {/* Sits above the footer button: footer padding + its 44pt height + a gap. */}
+      <DailyCompanion
+        bottom={insets.bottom + spacing.md + 44 + spacing.md}
+        onOpenWorld={openWorld}
+      />
       <View style={[styles.footer, { paddingBottom: insets.bottom + spacing.md }]}>
         <Pressable
           accessibilityRole="button"

@@ -12,6 +12,7 @@ describe('buildQueryPlan', () => {
     expect(plan({ topic: 'music' }).map((p) => p.lane)).toEqual([
       'overview',
       'documents',
+      'videos',
       'practice',
       'community',
       'events',
@@ -26,6 +27,11 @@ describe('buildQueryPlan', () => {
   it('restricts the documents lane to document content types', () => {
     const documents = plan({ topic: 'music' }).find((p) => p.lane === 'documents');
     expect(documents?.query.content_type).toEqual(['documents']);
+  });
+
+  it('restricts the videos lane to YouTube', () => {
+    const videos = plan({ topic: 'music' }).find((p) => p.lane === 'videos');
+    expect(videos).toMatchObject({ kind: 'video', query: { include_domains: ['youtube.com'] } });
   });
 
   it('weaves level and goal into the queries', () => {

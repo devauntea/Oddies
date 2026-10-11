@@ -5,21 +5,32 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Oddies</title>
     <meta name="description" content="Oddies draws the lives you could still live as a tree and helps you work on one branch today.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=Nunito+Sans:opsz,wght@6..12,400;6..12,600;6..12,700&display=swap">
     <link rel="stylesheet" href="/css/base.css">
+    <link rel="stylesheet" href="/css/world-map.css">
+    <link rel="preload" as="fetch" href="/assets/scene-layout.json" crossorigin>
     <script src="https://browser.sentry-cdn.com/11.6.0/bundle.tracing.min.js" integrity="sha384-yktoq3bnSR9ZyyKjW/n9Co8AAItq1N/6OuvY9mTtMhl/IBpCbsDs6N6hugod29Hc" crossorigin="anonymous"></script>
     <script src="/config.js"></script>
     <script src="/js/sentry-init.js"></script>
   </head>
   <body class="page page--home" data-page="home">
     <main class="home">
-      <h1 class="home__title">Oddies</h1>
-      <p class="home__line">Every life you could still live, drawn as one tree. Pick a branch to work on today.</p>
-      <div class="home__actions">
-        <button type="button" class="button" data-action="see-demo">See the demo</button>
-        <a class="button" href="/intake" data-action="start-own">Start my own</a>
+      <section class="home__map world-map" data-role="world-map" aria-label="Your map of possible lives">
+        <p class="world-map__fallback">Loading your map…</p>
+      </section>
+      <div class="home__intro">
+        <h1 class="home__title">Oddies</h1>
+        <p class="home__line">Every life you could still live, drawn as one tree. Pick a branch to work on today.</p>
+        <div class="home__actions">
+          <button type="button" class="button" data-action="see-demo">See the demo</button>
+          <a class="button" href="/intake" data-action="start-own">Start my own</a>
+        </div>
+        <p class="notice" data-role="notice" role="status" hidden></p>
       </div>
-      <p class="notice" data-role="notice" role="status" hidden></p>
     </main>
     <script type="module" src="/js/home.js"></script>
+    <script type="module" src="/js/world-map.js"></script>
   </body>
 </html>

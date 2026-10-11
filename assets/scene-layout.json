@@ -1,0 +1,345 @@
+{
+  "version": 1,
+  "notes": [
+    "One coordinate system for every layer: a 1024 x 1536 portrait canvas (2:3).",
+    "Every layer file is a full 1024 x 1536 canvas. Draw it at (x, y) with size (1024 * scale, 1536 * scale).",
+    "Transforms were calibrated against reference/map-composed.webp; the isolated layers are not pixel masks of it.",
+    "Draw layers in ascending z. Live UI (labels, buttons, sheets) sits above z 70 and is never baked into art.",
+    "hit, bounds, focus, pivot, paths and clearing are in canvas units."
+  ],
+  "canvas": {
+    "width": 1024,
+    "height": 1536,
+    "edgeTop": "#4FB56C",
+    "edgeBottom": "#3EAC6C"
+  },
+  "layers": [
+    {
+      "id": "background",
+      "file": "map/00_background.webp",
+      "z": 0,
+      "x": 0,
+      "y": 0,
+      "scale": 1,
+      "motion": "none"
+    },
+    {
+      "id": "serenity",
+      "file": "map/10_serenity_world.webp",
+      "z": 10,
+      "x": 0.9,
+      "y": 1.3,
+      "scale": 0.705,
+      "motion": "worldBob",
+      "world": "serenity",
+      "phase": 0
+    },
+    {
+      "id": "midnight",
+      "file": "map/20_midnight_world.webp",
+      "z": 20,
+      "x": 254.4,
+      "y": 26.3,
+      "scale": 0.725,
+      "motion": "worldBob",
+      "world": "midnight",
+      "phase": 0.5
+    },
+    {
+      "id": "artist",
+      "file": "map/30_artist_world.webp",
+      "z": 30,
+      "x": -24.2,
+      "y": 251.8,
+      "scale": 0.7875,
+      "motion": "worldBob",
+      "world": "artist",
+      "phase": 0.75
+    },
+    {
+      "id": "founder",
+      "file": "map/40_founder_world.webp",
+      "z": 40,
+      "x": 385.1,
+      "y": 428.8,
+      "scale": 0.64,
+      "motion": "worldBob",
+      "world": "founder",
+      "phase": 0.25
+    },
+    {
+      "id": "meadow",
+      "file": "map/50_meadow_details.webp",
+      "z": 50,
+      "x": 0,
+      "y": 0,
+      "scale": 1,
+      "motion": "none"
+    },
+    {
+      "id": "character",
+      "file": "map/60_character.webp",
+      "z": 60,
+      "x": 321.5,
+      "y": 418.5,
+      "scale": 0.375,
+      "motion": "breathe"
+    }
+  ],
+  "worlds": [
+    {
+      "id": "serenity",
+      "name": "Quiet Peaks",
+      "personality": "The Monk",
+      "outfit": "monk",
+      "traits": [
+        "Mindful",
+        "Grounded"
+      ],
+      "theme": "Calm, meaning, inner life",
+      "accent": "#D4A04C",
+      "patch": "#F6D173",
+      "portrait": "personalities/monk.webp",
+      "invitation": "Imagine a slower path. What would you want more room for?",
+      "route": [
+        "Past practice",
+        "Regular meditation",
+        "Speak with a teacher",
+        "Explore a retreat or community"
+      ],
+      "researchTopic": "meditation practice",
+      "bounds": {
+        "x": 15,
+        "y": 100,
+        "width": 491,
+        "height": 465
+      },
+      "hit": {
+        "x": 15,
+        "y": 100,
+        "width": 475,
+        "height": 420
+      },
+      "focus": {
+        "x": 260,
+        "y": 332
+      },
+      "layer": "serenity",
+      "portraitSize": {
+        "width": 256,
+        "height": 661
+      },
+      "path": {
+        "d": "M448 712 C445 703.3 434.7 678.7 430 660 C425.3 641.3 424.2 617.5 420 600 C415.8 582.5 412.5 567.2 405 555 C397.5 542.8 389.2 534.3 375 527 C360.8 519.7 339.8 515.5 320 511 C300.2 506.5 272.7 505.5 256 500 C239.3 494.5 230.2 487.2 220 478 C209.8 468.8 204.2 456.3 195 445 C185.8 433.7 176.2 419.2 165 410 C153.8 400.8 144.8 396.5 128 390 C111.2 383.5 85.3 374.8 64 371 C42.7 367.2 10.7 367.7 0 367",
+        "length": 631
+      }
+    },
+    {
+      "id": "midnight",
+      "name": "Midnight City",
+      "personality": "The Agent",
+      "outfit": "agent",
+      "traits": [
+        "Focused",
+        "Brave"
+      ],
+      "theme": "Curiosity, investigation, courage",
+      "accent": "#34455E",
+      "patch": "#8198D9",
+      "portrait": "personalities/agent.webp",
+      "invitation": "Imagine following your curiosity into hard questions. What draws you here?",
+      "route": [
+        "Relevant experience",
+        "Verify official eligibility",
+        "Identify gaps",
+        "Prepare for selection"
+      ],
+      "researchTopic": "investigative careers",
+      "bounds": {
+        "x": 540,
+        "y": 122,
+        "width": 448,
+        "height": 443
+      },
+      "hit": {
+        "x": 545,
+        "y": 122,
+        "width": 443,
+        "height": 398
+      },
+      "focus": {
+        "x": 764,
+        "y": 344
+      },
+      "layer": "midnight",
+      "portraitSize": {
+        "width": 271,
+        "height": 668
+      },
+      "path": {
+        "d": "M598 716 C602.5 710 613.8 692.7 625 680 C636.2 667.3 652.3 652.5 665 640 C677.7 627.5 692.5 617.3 701 605 C709.5 592.7 709.7 578.2 716 566 C722.3 553.8 728.8 540.5 739 532 C749.2 523.5 764.3 520.3 777 515 C789.7 509.7 804 510.5 815 500 C826 489.5 833.8 464.5 843 452 C852.2 439.5 857.2 433.7 870 425 C882.8 416.3 903.3 405.8 920 400 C936.7 394.2 952.7 392 970 390 C987.3 388 1015 388.3 1024 388",
+        "length": 574
+      }
+    },
+    {
+      "id": "artist",
+      "name": "Color Valley",
+      "personality": "The Painter",
+      "outfit": "painter",
+      "traits": [
+        "Curious",
+        "Expressive"
+      ],
+      "theme": "Expression, craft, creativity",
+      "accent": "#E99D8B",
+      "patch": "#F4A48D",
+      "portrait": "personalities/painter.webp",
+      "invitation": "Imagine making something every day. What would you love to create?",
+      "route": [
+        "Previous work",
+        "Consistent practice",
+        "Build a portfolio",
+        "Share or exhibit work"
+      ],
+      "researchTopic": "painting practice",
+      "bounds": {
+        "x": 0,
+        "y": 896,
+        "width": 519,
+        "height": 453
+      },
+      "hit": {
+        "x": 0,
+        "y": 896,
+        "width": 515,
+        "height": 453
+      },
+      "focus": {
+        "x": 252,
+        "y": 1122
+      },
+      "layer": "artist",
+      "portraitSize": {
+        "width": 348,
+        "height": 667
+      },
+      "path": {
+        "d": "M380 800 C371.7 800.8 345.8 802.5 330 805 C314.2 807.5 297.5 809.2 285 815 C272.5 820.8 262.5 829.2 255 840 C247.5 850.8 245 865 240 880 C235 895 230 914.2 225 930 C220 945.8 217.5 961.7 210 975 C202.5 988.3 193.7 999.7 180 1010 C166.3 1020.3 147.3 1028.7 128 1037 C108.7 1045.3 85.3 1052.8 64 1060 C42.7 1067.2 10.7 1076.7 0 1080",
+        "length": 519
+      }
+    },
+    {
+      "id": "founder",
+      "name": "Idea Gardens",
+      "personality": "The Founder",
+      "outfit": "founder",
+      "traits": [
+        "Inventive",
+        "Driven"
+      ],
+      "theme": "Building, entrepreneurship, possibility",
+      "accent": "#B4A0DB",
+      "patch": "#BBA0E2",
+      "portrait": "personalities/founder.webp",
+      "invitation": "Imagine building something of your own. What problem would you solve first?",
+      "route": [
+        "Existing idea",
+        "Customer conversations",
+        "Test an offer",
+        "Launch and learn"
+      ],
+      "researchTopic": "starting a small business",
+      "bounds": {
+        "x": 547,
+        "y": 928,
+        "width": 477,
+        "height": 444
+      },
+      "hit": {
+        "x": 547,
+        "y": 928,
+        "width": 477,
+        "height": 444
+      },
+      "focus": {
+        "x": 788,
+        "y": 1150
+      },
+      "layer": "founder",
+      "portraitSize": {
+        "width": 306,
+        "height": 669
+      },
+      "path": {
+        "d": "M646 812 C653.3 814.7 676.8 820.8 690 828 C703.2 835.2 715.8 843.8 725 855 C734.2 866.2 740 880 745 895 C750 910 751.2 929.2 755 945 C758.8 960.8 760.5 976.7 768 990 C775.5 1003.3 786.3 1014.2 800 1025 C813.7 1035.8 834 1046.2 850 1055 C866 1063.8 877.7 1071.8 896 1078 C914.3 1084.2 938.7 1087.5 960 1092 C981.3 1096.5 1013.3 1102.8 1024 1105",
+        "length": 523
+      }
+    }
+  ],
+  "character": {
+    "layer": "character",
+    "hit": {
+      "x": 422,
+      "y": 507,
+      "width": 183,
+      "height": 425
+    },
+    "pivot": {
+      "x": 513,
+      "y": 932
+    },
+    "shadow": {
+      "x": 513,
+      "y": 930,
+      "rx": 70,
+      "ry": 12
+    }
+  },
+  "clearing": {
+    "x": 512,
+    "y": 815,
+    "rx": 135,
+    "ry": 104
+  },
+  "motion": {
+    "notes": "Starting values from style.md section 11. Durations in ms, distances in canvas units.",
+    "arrive": {
+      "durationMs": 600,
+      "staggerMs": 90,
+      "rise": 14
+    },
+    "breathe": {
+      "durationMs": 3600,
+      "scaleY": 1.008
+    },
+    "worldBob": {
+      "enabled": true,
+      "durationMs": 5600,
+      "amplitude": 2.5,
+      "notes": "Prototype option. Set enabled to false to keep landmarks grounded."
+    },
+    "hello": {
+      "durationMs": 420,
+      "lift": 14
+    },
+    "select": {
+      "durationMs": 200,
+      "scale": 1.02
+    },
+    "pathAccent": {
+      "durationMs": 520,
+      "width": 12,
+      "color": "#FFF8EF"
+    },
+    "enter": {
+      "durationMs": 560,
+      "zoom": 2.1
+    },
+    "exit": {
+      "durationMs": 450
+    },
+    "sheet": {
+      "durationMs": 280
+    }
+  }
+}

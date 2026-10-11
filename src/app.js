@@ -8,6 +8,8 @@ const { buildToday, readStep } = require('./today');
 const store = require('./store');
 
 const PUBLIC_DIR = path.join(__dirname, '..', 'public');
+// Shared art and scene layout, also bundled by the Expo app in /mobile. See assets/README.md.
+const ASSETS_DIR = path.join(__dirname, '..', 'assets');
 const MAX_CHAT_CHARS = 2000;
 const MAX_INTAKE_CHARS = 20000;
 
@@ -204,6 +206,7 @@ function createApp({ db, gemini, nimble }) {
     throw new HttpError(404, 'not_found', `No route for ${req.method} ${req.originalUrl}`);
   });
 
+  app.use('/assets', express.static(ASSETS_DIR));
   app.use(express.static(PUBLIC_DIR, { extensions: ['html'] }));
 
   app.use((req, res) => {

@@ -1,0 +1,37 @@
+{
+  "base": {
+    "breathSeconds": 4.8,
+    "headDegrees": 1.15,
+    "armDegrees": 0.65,
+    "gestureDegrees": 3,
+    "accent": "#E99D8B"
+  },
+  "monk": {
+    "breathSeconds": 6.4,
+    "headDegrees": 0.6,
+    "armDegrees": 0,
+    "gestureDegrees": 0,
+    "accent": "#D4A04C"
+  },
+  "agent": {
+    "breathSeconds": 4.4,
+    "headDegrees": 0.75,
+    "armDegrees": 0.35,
+    "gestureDegrees": 1.3,
+    "accent": "#34455E"
+  },
+  "painter": {
+    "breathSeconds": 4.2,
+    "headDegrees": 1.4,
+    "armDegrees": 0.8,
+    "gestureDegrees": 4.2,
+    "accent": "#E99D8B"
+  },
+  "founder": {
+    "breathSeconds": 4.6,
+    "headDegrees": 1.05,
+    "armDegrees": 0.55,
+    "gestureDegrees": 2.6,
+    "accent": "#B4A0DB"
+  }
+}

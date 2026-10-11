@@ -1,0 +1,432 @@
+/*
+  Home map: the present self among four worlds.
+  public/js/world-map.js builds the layers from /assets/scene-layout.json and
+  sets the --wm-* timing variables from its "motion" block. One canvas unit is
+  100cqw / 1024, so distances from the layout file scale with the map.
+  Colors follow assets/tokens.json.
+*/
+
+.home {
+  --oddies-ivory: #fff8ef;
+  --oddies-plum: #352a3d;
+  --oddies-iris: #b4a0db;
+  display: grid;
+  gap: 24px;
+  max-width: 1040px;
+  margin: 0 auto;
+}
+
+@media (min-width: 860px) {
+  .home {
+    grid-template-columns: minmax(0, 480px) minmax(0, 1fr);
+    align-items: center;
+  }
+}
+
+.home__title {
+  font-family: Fraunces, Georgia, serif;
+  font-weight: 600;
+  font-size: clamp(2rem, 5vw, 2.75rem);
+  line-height: 1.1;
+  margin: 0 0 8px;
+}
+
+.home__line {
+  font-family: 'Nunito Sans', system-ui, sans-serif;
+  font-size: 1.0625rem;
+  line-height: 1.5;
+  max-width: 34em;
+}
+
+/* ---------- Map ---------- */
+
+.world-map {
+  --wm-unit: calc(100cqw / 1024);
+  position: relative;
+  width: 100%;
+  max-width: 480px;
+  aspect-ratio: 2 / 3;
+  margin-inline: auto;
+  overflow: hidden;
+  border-radius: 28px;
+  container-type: inline-size;
+  isolation: isolate;
+  color: var(--oddies-plum);
+  background: linear-gradient(var(--wm-edge-top, #4fb56c) 50%, var(--wm-edge-bottom, #3eac6c) 50%);
+  font-family: 'Nunito Sans', system-ui, sans-serif;
+}
+
+.world-map__fallback {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  margin: 0;
+  color: var(--oddies-ivory);
+}
+
+.world-map__camera {
+  position: absolute;
+  inset: 0;
+  transform-origin: 50% 50%;
+  transition: transform var(--wm-exit-ms, 450ms) cubic-bezier(0.33, 0, 0.2, 1);
+}
+
+.world-map.is-entering .world-map__camera {
+  transition-duration: var(--wm-enter-ms, 560ms);
+  transition-timing-function: cubic-bezier(0.45, 0, 0.2, 1);
+}
+
+.world-map__canvas {
+  position: absolute;
+  inset: 0;
+}
+
+.world-map__layer {
+  position: absolute;
+  pointer-events: none;
+}
+
+.world-map__motion,
+.world-map__art {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.world-map__art {
+  display: block;
+  user-select: none;
+  transition:
+    transform var(--wm-select-ms, 200ms) ease-out,
+    filter var(--wm-select-ms, 200ms) ease-out;
+}
+
+/* Arrive: layers settle in draw order. */
+.world-map.is-arriving .world-map__layer {
+  animation: wm-arrive var(--wm-arrive-ms, 600ms) cubic-bezier(0.2, 0.7, 0.3, 1) var(--wm-arrive-delay, 0ms) both;
+}
+
+@keyframes wm-arrive {
+  from {
+    opacity: 0;
+    transform: translateY(calc(var(--wm-rise, 14) * -1 * var(--wm-unit)));
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Idle: worlds drift on staggered phases, the present self breathes from the feet. */
+.world-map__layer--bob .world-map__motion {
+  animation: wm-bob var(--wm-bob-ms, 5600ms) ease-in-out var(--wm-phase, 0ms) infinite;
+}
+
+@keyframes wm-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(calc(var(--wm-bob-amp, 2.5) * -1 * var(--wm-unit)));
+  }
+}
+
+.world-map__layer--character .world-map__motion {
+  animation: wm-breathe var(--wm-breathe-ms, 3600ms) ease-in-out infinite;
+}
+
+@keyframes wm-breathe {
+  0%,
+  100% {
+    transform: scaleY(1);
+  }
+  50% {
+    transform: scaleY(var(--wm-breathe-scale, 1.008));
+  }
+}
+
+.world-map__layer--character.is-hello {
+  animation: wm-hello var(--wm-hello-ms, 420ms) cubic-bezier(0.3, 0.7, 0.4, 1);
+}
+
+@keyframes wm-hello {
+  0%,
+  100% {
+    transform: none;
+  }
+  40% {
+    transform: translateY(calc(var(--wm-hello-lift, 14) * -1 * var(--wm-unit))) scale(1.015);
+  }
+}
+
+/* Select: the chosen world lifts, the others step back. */
+.world-map.has-selection .world-map__layer--world:not(.is-selected) .world-map__art {
+  filter: saturate(0.8) brightness(0.93);
+}
+
+.world-map__layer--world.is-selected .world-map__art {
+  transform: scale(var(--wm-select-scale, 1.02));
+  filter: drop-shadow(0 calc(6 * var(--wm-unit)) calc(14 * var(--wm-unit)) rgb(40 74 57 / 0.3));
+}
+
+/* Path highlight: drawn from the clearing out toward the chosen world. */
+.world-map__paths {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.world-map__accent path {
+  fill: none;
+  stroke-linecap: round;
+  stroke-dasharray: var(--wm-path-length);
+  stroke-dashoffset: var(--wm-path-length);
+  transition: stroke-dashoffset var(--wm-accent-ms, 520ms) cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.world-map__accent-glow {
+  stroke: var(--oddies-iris);
+  stroke-width: 26;
+  opacity: 0.55;
+}
+
+.world-map__accent-core {
+  stroke: var(--oddies-ivory);
+  stroke-width: 12;
+}
+
+.world-map__accent.is-lit path {
+  stroke-dashoffset: 0;
+}
+
+/* Touch targets: whole world regions, plus the present self. */
+.world-map__hit {
+  position: absolute;
+  z-index: 80;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 36%;
+  background: transparent;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.world-map__hit:focus-visible {
+  outline: 3px solid var(--oddies-ivory);
+  outline-offset: -8px;
+}
+
+.world-map__label {
+  position: absolute;
+  z-index: 85;
+  margin: 0;
+  padding: 4px 12px;
+  transform: translate(-50%, -70%);
+  border-radius: 999px;
+  background: var(--oddies-ivory);
+  color: var(--oddies-plum);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.4;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgb(40 74 57 / 0.2);
+  transition: opacity 150ms ease-out;
+}
+
+.world-map.is-entering .world-map__label {
+  opacity: 0;
+}
+
+/* ---------- World introduction ---------- */
+
+.world-intro {
+  position: absolute;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  pointer-events: none;
+  background: linear-gradient(rgb(255 248 239 / 0) 45%, rgb(255 248 239 / 0.35));
+}
+
+.world-intro__portrait {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: 46%;
+  width: 100%;
+  margin-bottom: -20px;
+  object-fit: contain;
+  object-position: 50% 100%;
+  filter: drop-shadow(0 10px 10px rgb(40 74 57 / 0.25));
+  opacity: 0;
+  transform: translateY(6%);
+  transition:
+    opacity 320ms ease-out,
+    transform 320ms cubic-bezier(0.2, 0.7, 0.3, 1);
+}
+
+.world-intro__card {
+  position: relative;
+  pointer-events: auto;
+  padding: 28px 20px 20px;
+  border-radius: 26px 26px 0 0;
+  background: var(--oddies-ivory);
+  color: var(--oddies-plum);
+  opacity: 0;
+  transform: translateY(16px);
+  transition:
+    opacity 280ms ease-out,
+    transform 280ms cubic-bezier(0.2, 0.7, 0.3, 1);
+}
+
+.world-intro.is-open .world-intro__portrait,
+.world-intro.is-open .world-intro__card {
+  opacity: 1;
+  transform: none;
+}
+
+.world-intro__title {
+  margin: 0;
+  font-family: Fraunces, Georgia, serif;
+  font-size: clamp(24px, 7cqw, 32px);
+  font-weight: 600;
+  line-height: 1.15;
+}
+
+.world-intro__title:focus {
+  outline: none;
+}
+
+.world-intro__who {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 6px 0 10px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0.85;
+}
+
+.world-intro__who::before {
+  content: '';
+  flex: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--wm-world-accent, var(--oddies-iris));
+}
+
+.world-intro__invite {
+  margin: 0 0 12px;
+  font-size: 16px;
+  line-height: 1.45;
+}
+
+.world-intro__route-title {
+  margin: 0 0 6px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  opacity: 0.6;
+}
+
+.world-intro__route {
+  display: grid;
+  gap: 4px;
+  margin: 0 0 16px;
+  padding: 0;
+  list-style: none;
+  font-size: 13px;
+}
+
+.world-intro__step {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.world-intro__step::before {
+  content: '';
+  flex: none;
+  width: 10px;
+  height: 10px;
+  border: 2px solid var(--wm-world-accent, var(--oddies-iris));
+  border-radius: 50%;
+}
+
+.world-intro__step[data-state='start']::before {
+  background: var(--wm-world-accent, var(--oddies-iris));
+}
+
+.world-intro__step[data-state='next'] {
+  font-weight: 700;
+}
+
+.world-intro__step[data-state='next']::before {
+  border-color: var(--oddies-plum);
+  box-shadow: inset 0 0 0 2px var(--oddies-ivory);
+  background: var(--oddies-plum);
+}
+
+.world-intro__step[data-state='later'] {
+  opacity: 0.7;
+}
+
+.world-intro__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.world-intro__actions .button {
+  flex: 1 1 10em;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 10px 16px;
+  border: 1.5px solid var(--oddies-plum);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--oddies-plum);
+  font-size: 15px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.world-intro__actions .world-intro__primary {
+  background: var(--oddies-plum);
+  color: var(--oddies-ivory);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .world-map *,
+  .world-map *::before,
+  .world-map *::after {
+    animation: none !important;
+  }
+
+  .world-map__camera,
+  .world-map__art,
+  .world-map__accent path {
+    transition: none !important;
+  }
+
+  .world-intro__portrait,
+  .world-intro__card {
+    transform: none;
+    transition: opacity 200ms ease-out;
+  }
+}

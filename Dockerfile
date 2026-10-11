@@ -14,5 +14,6 @@ COPY --from=build /app/node_modules ./node_modules
 COPY package.json server.js instrument.js ./
 COPY src ./src
 COPY public ./public
+COPY assets ./assets
 EXPOSE 8080
 CMD ["node", "--import", "./instrument.js", "server.js"]

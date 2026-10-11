@@ -9,3 +9,6 @@ data/
 .DS_Store
 npm-debug.log*
 .claude/
+
+# Expo local cache (mobile app dev server also writes one at the repo root if run from here)
+.expo/

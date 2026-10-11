@@ -54,3 +54,10 @@ The app calls `/api/*` on the dev server during development. For preview and pro
 deploy the server (for example with EAS Hosting: `npx expo export --platform web` then
 `npx eas-cli deploy`), set `NIMBLE_API_KEY` as a server secret there, and set
 `EXPO_PUBLIC_API_URL` to the deployed URL for the app build.
+
+## Sentry
+
+Crash and error reporting via `@sentry/react-native`, set up in `src/observability/sentry.ts`.
+It stays off until `EXPO_PUBLIC_SENTRY_DSN` is set, and only reports from release builds unless
+`EXPO_PUBLIC_SENTRY_IN_DEV=true`. For readable stack traces in EAS builds, add `SENTRY_AUTH_TOKEN`,
+`SENTRY_ORG` and `SENTRY_PROJECT` as EAS secrets. The Nimble API routes are not instrumented yet.

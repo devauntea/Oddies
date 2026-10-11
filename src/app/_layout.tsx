@@ -1,9 +1,12 @@
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 
+import { initSentry, wrapWithSentry } from '@/observability/sentry';
 import { colors } from '@/theme/tokens';
 
-export default function RootLayout() {
+initSentry();
+
+function RootLayout() {
   return (
     <>
       <StatusBar style="dark" />
@@ -21,3 +24,5 @@ export default function RootLayout() {
     </>
   );
 }
+
+export default wrapWithSentry(RootLayout);

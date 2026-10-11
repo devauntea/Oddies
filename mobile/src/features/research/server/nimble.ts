@@ -26,8 +26,12 @@ function getClient(): Nimble | null {
 export function nimbleSearch(): SearchFn | null {
   const nimble = getClient();
   if (!nimble) return null;
-  return async (query) => {
-    const response = await nimble.search({ ...query, output_format: 'plain_text' });
+  return async (query, options) => {
+    // The service enforces one deadline across all lanes, so no per-call retries here.
+    const response = await nimble.search(
+      { ...query, output_format: 'plain_text' },
+      { signal: options?.signal, timeout: 20_000, maxRetries: 0 },
+    );
     return {
       results: response.results,
       answer: response.answer,

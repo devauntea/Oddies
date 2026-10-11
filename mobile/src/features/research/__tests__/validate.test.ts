@@ -32,6 +32,7 @@ describe('parseResearchRequest', () => {
     [{ topic: 'music', lanes: [] }, '`lanes` must be a non-empty array.'],
     [{ topic: 'music', lanes: ['overview', 'gossip'] }, 'Unknown lanes: gossip.'],
     [{ topic: 'music', country: 'USA' }, '`country` must be a 2-letter code.'],
+    [{ topic: 'music', refresh: 'yes' }, '`refresh` must be a boolean.'],
     [{ topic: 'music', locale: 'english' }, '`locale` must look like "en" or "en-US".'],
   ])('rejects %j', (body, error) => {
     expect(parseResearchRequest(body)).toEqual({ ok: false, error });

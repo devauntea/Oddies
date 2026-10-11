@@ -1,5 +1,6 @@
 import type { Lane, Resource, ResourceKind } from '../types';
 import { hostnameOf, normalizeUrl, resourceIdFor } from './ids';
+import { isBlockedHost } from './quality';
 
 /** The fields we read from a Nimble search result. */
 export interface RawSearchResult {
@@ -27,6 +28,7 @@ export function toResource(raw: RawSearchResult, lane: Lane, kind: ResourceKind)
   const url = normalizeUrl(raw.url);
   if (!url) return null;
   const source = hostnameOf(url);
+  if (isBlockedHost(source)) return null;
   const title = raw.title?.trim() || source;
   return {
     id: resourceIdFor(url),

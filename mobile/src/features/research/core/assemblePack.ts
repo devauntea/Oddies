@@ -1,5 +1,6 @@
 import type { Lane, Resource, ResearchPack, ResearchSummary } from '../types';
 import { dedupeResources, toResource, type RawSearchResult } from './normalize';
+import { capPerHost } from './quality';
 import type { PlannedSearch } from './queryPlan';
 import { buildTasks } from './taskBuilder';
 import type { NormalizedResearchRequest } from './validate';
@@ -57,7 +58,9 @@ export function assemblePack(
     }
   }
 
-  const unique = dedupeResources(resources);
+  const unique = capPerHost(dedupeResources(resources));
+  const keptIds = new Set(unique.map((r) => r.id));
+  const summary = buildSummary(outcomes.find((o) => o.planned.lane === 'overview'));
 
   return {
     topic: request.topic,
@@ -65,7 +68,11 @@ export function assemblePack(
     ...(request.pathId && { pathId: request.pathId }),
     generatedAt: options.now.toISOString(),
     source: options.source,
-    summary: buildSummary(outcomes.find((o) => o.planned.lane === 'overview')),
+    summary: summary && {
+      ...summary,
+      // A citation to a result we filtered out would point at nothing.
+      citations: summary.citations.filter((c) => keptIds.has(c.resourceId)),
+    },
     resources: unique,
     tasks: buildTasks({ topic: request.topic, level: request.level, resources: unique }),
     warnings,

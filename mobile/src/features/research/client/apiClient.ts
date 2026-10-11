@@ -28,13 +28,36 @@ export function getApiBaseUrl(): string {
   throw new Error('EXPO_PUBLIC_API_URL is not set. See .env.example.');
 }
 
+/** Slightly longer than the server's 20 s search deadline, so the server's message wins. */
+const REQUEST_TIMEOUT_MS = 30_000;
+
 async function postJson<T>(path: string, body: unknown, signal?: AbortSignal): Promise<T> {
-  const response = await fetch(`${getApiBaseUrl()}${path}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-    signal,
-  });
+  // AbortSignal.timeout/any aren't reliably available in React Native, so link signals by hand.
+  const controller = new AbortController();
+  const onAbort = () => controller.abort();
+  signal?.addEventListener('abort', onAbort);
+  let timedOut = false;
+  const timer = setTimeout(() => {
+    timedOut = true;
+    controller.abort();
+  }, REQUEST_TIMEOUT_MS);
+
+  let response: Response;
+  try {
+    response = await fetch(`${getApiBaseUrl()}${path}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+      signal: controller.signal,
+    });
+  } catch (error) {
+    if (timedOut) throw new ApiError('This is taking too long. Please try again.', 504);
+    if (signal?.aborted) throw error;
+    throw new ApiError("Can't reach the server. Check your connection and try again.", 0);
+  } finally {
+    clearTimeout(timer);
+    signal?.removeEventListener('abort', onAbort);
+  }
   const data = (await response.json().catch(() => null)) as T | ApiErrorBody | null;
   if (!response.ok) {
     const message =

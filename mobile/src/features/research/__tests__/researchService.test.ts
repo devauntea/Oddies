@@ -5,7 +5,11 @@ import type { LaneSearchResult } from '../core/assemblePack';
 import type { SearchQuery } from '../core/queryPlan';
 import { parseResearchRequest, type NormalizedResearchRequest } from '../core/validate';
 import { createTtlCache } from '../server/cache';
-import { ResearchUnavailableError, runResearch } from '../server/researchService';
+import {
+  ResearchTimeoutError,
+  ResearchUnavailableError,
+  runResearch,
+} from '../server/researchService';
 import type { ResearchPack } from '../types';
 
 const now = () => new Date('2026-01-01T00:00:00Z');
@@ -116,6 +120,48 @@ describe('runResearch', () => {
     await runResearch(request(), { search, cache, now });
     await runResearch(request(), { search, cache, now });
 
+    expect(search).toHaveBeenCalledTimes(10);
+  });
+});
+
+describe('runResearch deadline and refresh', () => {
+  it('aborts slow searches at the shared deadline and reports a timeout', async () => {
+    const search = jest.fn(
+      (_query: SearchQuery, options?: { signal?: AbortSignal }) =>
+        new Promise<LaneSearchResult>((_resolve, reject) => {
+          options?.signal?.addEventListener('abort', () => reject(new Error('aborted')));
+        }),
+    );
+    await expect(runResearch(request(), { search, now, deadlineMs: 20 })).rejects.toBeInstanceOf(
+      ResearchTimeoutError,
+    );
+    expect(search).toHaveBeenCalledTimes(5);
+  });
+
+  it('keeps lanes that finish before the deadline', async () => {
+    const search = jest.fn((query: SearchQuery, options?: { signal?: AbortSignal }) =>
+      query.include_answer
+        ? Promise.resolve<LaneSearchResult>({
+            results: [{ title: 'Fast', url: 'https://example.com/fast' }],
+          })
+        : new Promise<LaneSearchResult>((_resolve, reject) => {
+            options?.signal?.addEventListener('abort', () => reject(new Error('aborted')));
+          }),
+    );
+    const pack = await runResearch(request(), { search, now, deadlineMs: 20, log: jest.fn() });
+    expect(pack.resources.map((r) => r.title)).toEqual(['Fast']);
+    expect(pack.warnings).toHaveLength(4);
+  });
+
+  it('skips the cache read on refresh but still stores the new pack', async () => {
+    const cache = createTtlCache<ResearchPack>({ ttlMs: 60_000, maxEntries: 10 });
+    const search = fakeSearch(() => ({ results: [] }));
+
+    await runResearch(request(), { search, cache, now });
+    await runResearch({ ...request(), refresh: true }, { search, cache, now });
+    expect(search).toHaveBeenCalledTimes(10);
+
+    await runResearch(request(), { search, cache, now });
     expect(search).toHaveBeenCalledTimes(10);
   });
 });

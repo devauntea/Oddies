@@ -2,6 +2,7 @@ import { parseResearchRequest } from '@/features/research/core/validate';
 import { nimbleSearch } from '@/features/research/server/nimble';
 import {
   defaultResearchCache,
+  ResearchTimeoutError,
   ResearchUnavailableError,
   runResearch,
 } from '@/features/research/server/researchService';
@@ -33,6 +34,9 @@ export async function POST(request: Request): Promise<Response> {
     return Response.json(pack);
   } catch (error) {
     console.error('[api/research] failed', error);
+    if (error instanceof ResearchTimeoutError) {
+      return Response.json({ error: error.message }, { status: 504 });
+    }
     const message =
       error instanceof ResearchUnavailableError ? error.message : 'Something went wrong.';
     return Response.json({ error: message }, { status: 502 });

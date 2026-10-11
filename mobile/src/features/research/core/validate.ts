@@ -59,7 +59,12 @@ export function parseResearchRequest(body: unknown): ParseResult<NormalizedResea
     return fail('`locale` must look like "en" or "en-US".');
   }
 
-  return { ok: true, value: { topic, level, lanes, goal, pathId, country, locale } };
+  if (input.refresh !== undefined && typeof input.refresh !== 'boolean') {
+    return fail('`refresh` must be a boolean.');
+  }
+  const refresh = input.refresh === true;
+
+  return { ok: true, value: { topic, level, lanes, goal, pathId, country, locale, refresh } };
 }
 
 export function parseDocumentRequest(body: unknown): ParseResult<{ url: string }> {

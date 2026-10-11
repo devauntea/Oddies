@@ -40,6 +40,22 @@ Your Life_:
 If a lane fails, the pack still returns, with a user-safe entry in `warnings`, and the task falls
 back to a generic version. Callers can pass `lanes` to run fewer searches and spend fewer credits.
 
+## Reliability and quality
+
+- **Shared deadline.** The five searches share one 20 s limit (`SEARCH_DEADLINE_MS`). Lanes that
+  finish in time are kept; the rest become warnings. If nothing finishes, the API returns 504.
+- **Refresh.** `{ "refresh": true }` skips the 30-minute server cache. The app's Refresh button
+  uses it. Only complete packs (no warnings) are cached.
+- **Result quality** (`core/quality.ts`). Junk domains (pin-boards, shopping marketplaces) are sent
+  to Nimble as `exclude_domains` and filtered again locally, and one site can fill at most 2
+  slots in a pack. Citations to filtered results are dropped.
+- **On-device cache** (`client/packCache.ts`). The last good pack per branch is saved on the
+  phone. Reopening a branch shows it instantly while a fresh pack loads, and it still works
+  offline, with a notice if the refresh failed.
+- **Time budget** (`core/budget.ts`). The user picks 15/30/60/90 minutes; `planDay` splits tasks
+  into "today" (prioritised learn, practice, reflect, conversation, experience) and "for later".
+  This runs on the device, so changing the budget never re-searches.
+
 ## Folder layout and rules
 
 | Folder        | Runs on     | Rules                                                                                          |
@@ -83,7 +99,13 @@ const { isDone, toggle } = useTaskProgress();
 
 ```jsonc
 // request (ResearchRequest)
-{ "topic": "music", "level": "beginner", "goal": "play a song for friends", "pathId": "branch-1" }
+{
+  "topic": "music",
+  "level": "beginner",
+  "goal": "play a song for friends",
+  "pathId": "branch-1",
+  "refresh": false,
+}
 // 200 response: ResearchPack (see types.ts). 400/502: { "error": "..." }
 ```
 

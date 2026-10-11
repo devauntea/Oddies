@@ -5,12 +5,26 @@ import type { ResearchPack } from '../types';
 import { createTtlCache, type TtlCache } from './cache';
 import { buildMockLaneResult } from './fixtures';
 
-export type SearchFn = (query: SearchQuery) => Promise<LaneSearchResult>;
+/** `signal` is aborted when the shared deadline passes. Implementations should honour it. */
+export type SearchFn = (
+  query: SearchQuery,
+  options?: { signal?: AbortSignal },
+) => Promise<LaneSearchResult>;
+
+/** All five searches share this limit, so a phone never waits on a stuck lane. */
+export const SEARCH_DEADLINE_MS = 20_000;
 
 export class ResearchUnavailableError extends Error {
   constructor() {
     super('Research is unavailable right now. Please try again shortly.');
     this.name = 'ResearchUnavailableError';
+  }
+}
+
+export class ResearchTimeoutError extends Error {
+  constructor() {
+    super('Research took too long. Please try again.');
+    this.name = 'ResearchTimeoutError';
   }
 }
 
@@ -20,6 +34,7 @@ export interface ResearchServiceDeps {
   cache?: TtlCache<ResearchPack>;
   now?: () => Date;
   log?: (message: string, error: unknown) => void;
+  deadlineMs?: number;
 }
 
 /** Default cache: identical requests within 30 minutes reuse the pack and save credits. */
@@ -50,12 +65,21 @@ export async function runResearch(
   }
 
   const key = cacheKey(request);
-  const cached = deps.cache?.get(key);
+  const cached = request.refresh ? undefined : deps.cache?.get(key);
   // pathId is not part of the key: re-stamp it so the caller always gets its own back.
   if (cached) return { ...cached, pathId: request.pathId };
 
   const search = deps.search;
-  const settled = await Promise.allSettled(plan.map((planned) => search(planned.query)));
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), deps.deadlineMs ?? SEARCH_DEADLINE_MS);
+  let settled: PromiseSettledResult<LaneSearchResult>[];
+  try {
+    settled = await Promise.allSettled(
+      plan.map((planned) => search(planned.query, { signal: controller.signal })),
+    );
+  } finally {
+    clearTimeout(timer);
+  }
   const outcomes: LaneOutcome[] = settled.map((result, i) => {
     const planned = plan[i]!;
     if (result.status === 'fulfilled') return { planned, ok: true, result: result.value };
@@ -63,7 +87,9 @@ export async function runResearch(
     return { planned, ok: false };
   });
 
-  if (outcomes.every((outcome) => !outcome.ok)) throw new ResearchUnavailableError();
+  if (outcomes.every((outcome) => !outcome.ok)) {
+    throw controller.signal.aborted ? new ResearchTimeoutError() : new ResearchUnavailableError();
+  }
 
   const pack = assemblePack(request, outcomes, { source: 'nimble', now: now() });
   // Only cache complete packs, so a transient lane failure isn't remembered for 30 minutes.

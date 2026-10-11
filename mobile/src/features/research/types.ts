@@ -38,6 +38,8 @@ export interface ResearchRequest {
   country?: string;
   /** Language code, e.g. "en". */
   locale?: string;
+  /** Skip the server cache and search again. Used by "refresh". */
+  refresh?: boolean;
 }
 
 export type ResourceKind = 'article' | 'document' | 'video' | 'community' | 'event';

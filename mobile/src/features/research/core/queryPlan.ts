@@ -1,4 +1,5 @@
 import type { Lane, Level, ResourceKind } from '../types';
+import { BLOCKED_DOMAINS } from './quality';
 import type { NormalizedResearchRequest } from './validate';
 
 /**
@@ -13,6 +14,8 @@ export interface SearchQuery {
   /** Semantic groups ('documents') or formats ('pdf'). Only valid with the general focus. */
   content_type?: string[];
   time_range?: 'week' | 'month' | 'year';
+  /** Nimble allows at most 50. */
+  exclude_domains?: string[];
   country?: string;
   locale?: string;
 }
@@ -35,7 +38,11 @@ export function buildQueryPlan(request: NormalizedResearchRequest): PlannedSearc
   const { topic, level, goal, lanes, country, locale } = request;
   const lvl = LEVEL_PHRASE[level];
   const forGoal = goal ? ` to ${goal}` : '';
-  const geo = { ...(country && { country }), ...(locale && { locale }) };
+  const geo = {
+    exclude_domains: [...BLOCKED_DOMAINS],
+    ...(country && { country }),
+    ...(locale && { locale }),
+  };
 
   const plans: Record<Lane, PlannedSearch> = {
     overview: {

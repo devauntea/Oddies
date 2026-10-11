@@ -13,5 +13,7 @@
     integrations: [window.Sentry.browserTracingIntegration()],
     tracesSampleRate: 1.0,
   });
+  // The Sentry project is shared with the mobile app. This tag tells the two apart.
+  window.Sentry.setTag('app', 'oddies-web');
   window.Sentry.setTag('page', document.body.dataset.page || 'unknown');
 })();

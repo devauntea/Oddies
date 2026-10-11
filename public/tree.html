@@ -3,8 +3,12 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Your tree | Oddies</title>
-    <meta name="description" content="Your possible lives, drawn as branches. Talk to any of them and pick one to work on today.">
+    <title>Your paths | Oddies</title>
+    <meta name="description" content="One you, many possibilities. Visit the worlds where other versions of you live, talk to them, and pick one path to work on today.">
+    <link rel="icon" href="/img/logo.webp">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=Nunito+Sans:opsz,wght@6..12,400;6..12,600;6..12,700&display=swap">
     <link rel="stylesheet" href="/css/base.css">
     <script src="https://browser.sentry-cdn.com/11.6.0/bundle.tracing.min.js" integrity="sha384-yktoq3bnSR9ZyyKjW/n9Co8AAItq1N/6OuvY9mTtMhl/IBpCbsDs6N6hugod29Hc" crossorigin="anonymous"></script>
     <script src="/config.js"></script>
@@ -12,7 +16,7 @@
   </head>
   <body class="page page--tree" data-page="tree">
     <header class="site-header">
-      <a class="site-header__home" href="/">Oddies</a>
+      <a class="site-header__home" href="/"><img class="site-header__logo" src="/img/logo.webp" alt="Oddies, home" width="1774" height="887"></a>
       <nav class="site-header__nav" aria-label="Site">
         <a href="/intake">Start my own</a>
         <button type="button" class="site-header__reset" data-action="demo-reset">Reset demo</button>
@@ -23,55 +27,71 @@
 
     <main class="tree-page">
       <section class="tree-section" aria-labelledby="tree-heading">
-        <h1 class="tree-section__title" id="tree-heading">Your tree</h1>
+        <h1 class="tree-section__title" id="tree-heading">One you, many possibilities</h1>
         <p class="tree-section__self" data-role="self-line"></p>
-        <div class="tree-scroll" data-role="tree-scroll" role="region" aria-label="Tree, scrolls sideways" tabindex="0">
+
+        <div class="tree-scroll" data-role="tree-scroll">
           <svg class="tree" data-role="tree" role="group" xmlns="http://www.w3.org/2000/svg"></svg>
         </div>
-        <p class="tree-section__hint">Select the node at the end of a branch to open that oddie.</p>
 
-        <details class="path-add" data-role="path-add">
-          <summary class="path-add__summary">Add a path</summary>
-          <form class="path-form" data-role="path-add-form">
-            <div class="path-form__fields" data-role="path-add-fields"></div>
-            <p class="panel__error" data-role="path-add-error" role="alert" hidden></p>
-            <button type="submit" class="path-form__save" data-action="path-add-save">Add this path</button>
-          </form>
-        </details>
+        <ul class="tree-legend" aria-label="What the dots mean">
+          <li class="tree-legend__item tree-legend__item--reached">Reached</li>
+          <li class="tree-legend__item tree-legend__item--unreached">Not yet</li>
+          <li class="tree-legend__item tree-legend__item--researched">Researched by Nimble</li>
+        </ul>
+        <p class="tree-section__hint">Tap a milestone to see what Nimble found for it. Tap the end of a path to talk to that you.</p>
+
+      <details class="path-add" data-role="path-add">
+        <summary class="path-add__summary">Add a path</summary>
+        <form class="path-form" data-role="path-add-form">
+          <div class="path-form__fields" data-role="path-add-fields"></div>
+          <p class="panel__error" data-role="path-add-error" role="alert" hidden></p>
+          <button type="submit" class="path-form__save" data-action="path-add-save">Add this path</button>
+        </form>
+      </details>
       </section>
 
-      <div class="panels">
-        <section class="panel panel--today" data-panel="today" aria-labelledby="today-heading">
-          <h2 class="panel__title" id="today-heading">Today</h2>
-          <p class="today__date" data-role="today-date"></p>
-          <p class="today__pick" data-role="today-pick"></p>
-          <ul class="branch-list" data-role="branch-list"></ul>
-
-          <p class="today__status" data-role="today-status" role="status" hidden></p>
-          <div class="today-error" data-role="today-error" role="alert" hidden>
-            <p class="today-error__text" data-role="today-error-text"></p>
-            <button type="button" class="today-error__retry" data-action="today-retry">Try again</button>
-          </div>
-
-          <h3 class="step-list__title">Steps</h3>
-          <p class="step-list__empty" data-role="step-empty"></p>
-          <ul class="step-list" data-role="step-list"></ul>
-          <p class="today__reflect" data-role="today-reflect" hidden>End of day check-in: rate your energy and engagement from 1 to 5, and write one sentence about what surprised you.</p>
-          <button type="button" class="step-list__refresh" data-action="today-refresh" hidden>Find different steps</button>
-
-          <h3 class="history-strip__title">Past days</h3>
-          <ol class="history-strip" data-role="history-strip"></ol>
-        </section>
+      <div class="below">
+        <div class="panels">
+          <section class="panel panel--research" data-panel="research" aria-labelledby="research-heading" hidden>
+            <header class="panel__header">
+              <div class="oddie-header__text">
+                <p class="oddie-header__world" data-role="research-world"></p>
+                <h2 class="panel__title" id="research-heading" data-role="research-title" tabindex="-1"></h2>
+              </div>
+              <button type="button" class="panel__close" data-action="research-close">Close</button>
+            </header>
+            <p class="research__summary" data-role="research-summary"></p>
+            <button type="button" class="research__run" data-action="research-run"></button>
+            <p class="today__status" data-role="research-status" role="status" hidden></p>
+            <p class="panel__error" data-role="research-error" role="alert" hidden></p>
+            <div class="research__lanes" data-role="research-lanes"></div>
+          </section>
 
         <aside class="panel panel--chat" data-panel="chat" aria-labelledby="chat-heading" hidden>
-          <header class="panel__header">
-            <h2 class="panel__title" id="chat-heading" data-role="chat-name" tabindex="-1"></h2>
+          <header class="panel__header oddie-header">
+            <svg class="oddie-rig" data-role="chat-rig" role="img" aria-label="This version of you" xmlns="http://www.w3.org/2000/svg"></svg>
+            <div class="oddie-header__text">
+              <p class="oddie-header__world" data-role="chat-world"></p>
+              <h2 class="panel__title" id="chat-heading" data-role="chat-name" tabindex="-1"></h2>
+            </div>
             <button type="button" class="panel__close" data-action="chat-close">Close</button>
           </header>
           <p class="oddie-life" data-role="chat-life"></p>
-          <h3 class="oddie-interests__title">Interests</h3>
-          <ul class="oddie-interests" data-role="chat-interests"></ul>
-          <h3 class="oddie-milestones__title">Milestones</h3>
+          <ul class="oddie-interests" data-role="chat-interests" aria-label="Interests"></ul>
+
+          <h3 class="chat__title">Conversation</h3>
+          <p class="chat__empty" data-role="chat-empty"></p>
+          <ol class="chat-log" data-role="chat-log" aria-live="polite"></ol>
+          <p class="chat__status" data-role="chat-status" role="status" hidden></p>
+          <p class="panel__error" data-role="chat-error" role="alert" hidden></p>
+          <form class="chat-form" data-role="chat-form">
+            <label class="chat-form__label" for="chat-input">Your message</label>
+            <textarea class="chat-form__input" id="chat-input" name="text" rows="2" maxlength="2000" required data-role="chat-input"></textarea>
+            <button type="submit" class="chat-form__send" data-action="chat-send">Send</button>
+          </form>
+
+          <h3 class="oddie-milestones__title">Milestones on this path</h3>
           <ol class="oddie-milestones" data-role="chat-milestones"></ol>
 
           <div class="oddie-actions">
@@ -87,18 +107,45 @@
               <button type="submit" class="path-form__save" data-action="path-edit-save">Save changes</button>
             </form>
           </details>
-
-          <h3 class="chat__title">Conversation</h3>
-          <p class="chat__empty" data-role="chat-empty"></p>
-          <ol class="chat-log" data-role="chat-log" aria-live="polite"></ol>
-          <p class="chat__status" data-role="chat-status" role="status" hidden></p>
-          <p class="panel__error" data-role="chat-error" role="alert" hidden></p>
-          <form class="chat-form" data-role="chat-form">
-            <label class="chat-form__label" for="chat-input">Your message</label>
-            <textarea class="chat-form__input" id="chat-input" name="text" rows="2" maxlength="2000" required data-role="chat-input"></textarea>
-            <button type="submit" class="chat-form__send" data-action="chat-send">Send</button>
-          </form>
         </aside>
+
+        <section class="panel panel--today" data-panel="today" aria-labelledby="today-heading">
+          <h2 class="panel__title" id="today-heading">Today</h2>
+          <p class="today__date" data-role="today-date"></p>
+          <p class="today__pick" data-role="today-pick"></p>
+          <ul class="branch-list" data-role="branch-list"></ul>
+
+          <p class="today__status" data-role="today-status" role="status" hidden></p>
+          <div class="today-error" data-role="today-error" role="alert" hidden>
+            <p class="today-error__text" data-role="today-error-text"></p>
+            <button type="button" class="today-error__retry" data-action="today-retry">Try again</button>
+          </div>
+
+          <h3 class="step-list__title">Steps</h3>
+          <p class="step-list__empty" data-role="step-empty"></p>
+          <ul class="step-list" data-role="step-list"></ul>
+          <p class="today__research" data-role="today-research" hidden>
+            <span data-role="today-research-text"></span>
+            <button type="button" class="step__read" data-action="today-sources">See every source</button>
+          </p>
+          <p class="today__reflect" data-role="today-reflect" hidden>End of day check-in: rate your energy and engagement from 1 to 5, and write one sentence about what surprised you.</p>
+          <button type="button" class="step-list__refresh" data-action="today-refresh" hidden>Find different steps</button>
+
+          <h3 class="history-strip__title">Past days</h3>
+          <ol class="history-strip" data-role="history-strip"></ol>
+        </section>
+        </div>
+
+        <section class="map-section" aria-labelledby="map-heading">
+          <h2 class="map-section__title" id="map-heading">Your worlds</h2>
+          <div class="world-map" data-role="world-map"></div>
+          <p class="map-section__hint">Tap a world to meet the you who lives there.</p>
+
+          <div class="more-paths" data-role="more-paths" hidden>
+            <h3 class="more-paths__title">More paths</h3>
+            <ul class="path-chips" data-role="path-chips"></ul>
+          </div>
+        </section>
       </div>
     </main>
 

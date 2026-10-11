@@ -57,12 +57,29 @@ CREATE TABLE IF NOT EXISTS chat_message (
   created_at TEXT NOT NULL
 );
 
+-- Every page Nimble returned while researching a milestone. Steps are the few
+-- of these that were picked for the day.
+CREATE TABLE IF NOT EXISTS source (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  oddie_id INTEGER NOT NULL REFERENCES oddie(id) ON DELETE CASCADE,
+  milestone_id INTEGER REFERENCES milestone(id) ON DELETE CASCADE,
+  lane TEXT NOT NULL,
+  query TEXT NOT NULL DEFAULT '',
+  kind TEXT NOT NULL DEFAULT 'article',
+  title TEXT NOT NULL,
+  url TEXT NOT NULL,
+  source TEXT NOT NULL DEFAULT '',
+  snippet TEXT NOT NULL DEFAULT '',
+  found_on TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS source_oddie ON source (oddie_id, milestone_id);
 CREATE INDEX IF NOT EXISTS milestone_oddie ON milestone (oddie_id, position);
 CREATE INDEX IF NOT EXISTS step_oddie_day ON step (oddie_id, found_on);
 CREATE INDEX IF NOT EXISTS chat_oddie ON chat_message (oddie_id, id);
 `;
 
-const TABLES = ['chat_message', 'step', 'day_pick', 'milestone', 'oddie', 'self'];
+const TABLES = ['chat_message', 'source', 'step', 'day_pick', 'milestone', 'oddie', 'self'];
 
 function openDb(file = process.env.DB_PATH || DEFAULT_DB_PATH) {
   if (file !== ':memory:') fs.mkdirSync(path.dirname(file), { recursive: true });

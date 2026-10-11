@@ -160,6 +160,7 @@ test('demo reset wipes everything and reloads the seed', async (t) => {
   assert.equal(reset.json.oddies[0].id, 1, 'ids restart');
   assert.equal(app.db.prepare('SELECT COUNT(*) AS n FROM step').get().n, 0);
   assert.equal(app.db.prepare('SELECT COUNT(*) AS n FROM chat_message').get().n, 0);
+  assert.equal(app.db.prepare('SELECT COUNT(*) AS n FROM source').get().n, 0);
 });
 
 test('config.js exposes only the Sentry DSN and environment', async (t) => {

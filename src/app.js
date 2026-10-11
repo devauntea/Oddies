@@ -183,6 +183,22 @@ function createApp({ db, gemini, nimble }) {
     res.json(result);
   });
 
+  // Researches a branch's next milestone without making it today's pick.
+  app.post('/api/research', limitAi, async (req, res) => {
+    const body = req.body || {};
+    if (!Number.isInteger(body.oddie_id)) throw new HttpError(400, 'invalid_input', 'oddie_id is required');
+    const result = await buildToday({
+      db,
+      gemini,
+      nimble,
+      oddieId: body.oddie_id,
+      date: todayISO(),
+      refresh: true,
+      setPick: false,
+    });
+    res.json(result);
+  });
+
   app.patch('/api/steps/:id', (req, res) => {
     const done = req.body ? req.body.done : undefined;
     if (done !== undefined && typeof done !== 'boolean') throw new HttpError(400, 'invalid_input', 'done must be true or false');

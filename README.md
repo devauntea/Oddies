@@ -1,13 +1,13 @@
 # Oddies
 
-Oddies draws the lives you could still live as a sideways tree. You are the node on the left. Each branch runs through milestones to an oddie: a version of you who lived that life. You can talk to any oddie, and each day you pick one branch. Oddies then searches the live web for real things you can do today toward it.
+One you, many possibilities. Oddies draws the lives you could still live as a tree: you today on the left, one path per life, milestones along each path, and at the end an oddie, the version of you who lived that life. You can talk to any oddie. Tap a milestone and Nimble researches it on the live web: every page it finds is kept and linked, and a few become steps you can do today. Under the tree, an illustrated map shows each oddie's world.
 
 Built for AI Engineer NYC 2026.
 
 - Live: https://oddies.fly.dev
 - Repo: https://github.com/devauntea/Oddies
 
-This repo is the framework only. The pages are plain on purpose so the design can be layered on without touching logic. See [For designers](#for-designers).
+The web app is at the repo root. The team's Expo app is in `mobile/`, and the design source files are in `temporal/`. The look follows the team's playbook, `temporal/style.md`. See [Design](#design) and [For designers](#for-designers).
 
 ## Stack
 
@@ -79,7 +79,7 @@ Without the secret the workflow still runs the tests and prints a warning instea
 
 | Route | What it does |
 | --- | --- |
-| `GET /api/state` | self, oddies with milestones, today's pick, today's steps, past picks |
+| `GET /api/state` | self, oddies with milestones and research, today's pick, today's steps, past picks |
 | `POST /api/intake` | `{ text }` in, 4 to 6 draft oddies out. Saves nothing |
 | `POST /api/oddies` | `{ self, oddies }`. Saves the drafts and replaces the current set |
 | `POST /api/oddies/add` | Adds one path to the current set |
@@ -88,6 +88,7 @@ Without the secret the workflow still runs the tests and prints a warning instea
 | `GET /api/oddies/:id/chat` | That oddie's saved conversation |
 | `POST /api/oddies/:id/chat` | `{ text }` in, the oddie's reply out |
 | `POST /api/today` | `{ oddie_id, refresh? }`. Records the pick, returns 3 to 5 steps |
+| `POST /api/research` | `{ oddie_id }`. Researches that path's next milestone without changing today's pick |
 | `PATCH /api/steps/:id` | `{ done }`. Two done steps on a milestone mark it reached |
 | `POST /api/steps/:id/read` | That step's page as markdown, through Nimble Extract |
 | `POST /api/demo/reset` | Wipes the database and reloads the demo |
@@ -101,6 +102,8 @@ Errors are `{ error, message }` with a real status code.
 3. Gemini picks 3 to 5 steps from those results only.
 4. The server drops any step whose URL Nimble did not return (`keepRealSteps` in `src/today.js`).
 5. If Nimble fails or times out, the API returns an error and the page shows it with a Try again button. There is no fallback to made-up steps.
+
+Every page Nimble returns is saved in the `source` table with its lane, the query that found it, and its link, not only the few that become steps. `GET /api/state` returns it as `oddie.research`, one entry per researched milestone. The tree rings those milestones and the research sheet lists every source.
 
 If Gemini is the part that fails, fixed lane rules write the queries or pick the steps instead, still only from Nimble results. So Today keeps working with just a Nimble key.
 
@@ -130,6 +133,22 @@ Not ported, on purpose: mock mode and generic tasks with no link. This app never
 - Server: `instrument.js`, loaded with `node --import`. Every Gemini call is a `gen_ai.generate_content` span with the model and input, output and total token counts (`src/gemini.js`). A retry or a fallback to another model is its own span, so a trace shows which model answered. Every Nimble call is a `nimble.search` span with the query, lane and result count, or a `nimble.extract` span (`src/nimble.js`). A Today request wraps both in a `today.build_steps` span that also records how many suggested steps were dropped by the URL check.
 - Browser: the Sentry CDN bundle plus `public/js/sentry-init.js`. Page loads and API calls are traced, and the trace id is passed to the server, so one click shows up as one trace from browser to Gemini and Nimble.
 
+## Design
+
+Built from `temporal/`: the playbook (`style.md`), the layered map art, and the character rig in `preview.html`.
+
+- **Palette and type:** ivory surfaces, plum text, iris for selected things, Fraunces for titles, Nunito Sans for the rest. All tokens are at the top of `public/css/base.css`.
+- **The map:** `public/js/map.js` stacks the art in layers (meadow, four worlds, foliage, the person) so each world is its own button. Where each layer sits is in CSS under "Map", as shares of the map's size, matched by eye to `temporal/Girl among four colorful worlds.png`. The playbook's `scene-layout.json` was not in the folder; if it turns up, put its numbers there.
+- **Which oddie gets which world:** `public/js/worlds.js`. Each world goes to the oddie whose name, life and interests fit it best (monk to Quiet Peaks, agent to Midnight City, painter to Color Valley, founder to Idea Gardens). Oddies left over take any free world. A fifth oddie and beyond has no art, so it shows as a chip under the map.
+- **The character:** `public/js/rig.js` draws the same person in the world's outfit at the top of the conversation sheet, with a blink. The art is generated into `public/js/rig-art.js` from `temporal/preview.html`.
+- **Web images:** `public/img/map/*.webp` are cropped, resized copies of the PNGs in `temporal/` (about 540 KB in all, against 10 MB of source).
+- **Logo:** `public/img/logo.webp` is the green wordmark artwork. The playbook's default is plum on ivory; that version was not supplied.
+- **The tree leads.** It is the first thing on the page. On phones it is drawn in a compact layout that fits the screen (`TREE_SPACING_COMPACT` in `public/js/tree.js`); from 720px up it is drawn in full (`TREE_SPACING`).
+- **Opening on the home page:** "Oddies" is written in cursive, then the view moves through it into the page. Once per tab, skipped by any tap or key (`public/js/home.js`, "Home: the opening" in the CSS).
+- **Motion:** worlds drift a few pixels, the person breathes, sheets fade in, the research ring turns slowly. All of it is off under Reduce Motion.
+
+Not built from the playbook yet: voice input, saving memories, a story view, and the walk-into-a-world transition.
+
 ## For designers
 
 Everything visual is yours to replace. Three rules keep the logic working:
@@ -142,7 +161,7 @@ Everything visual is yours to replace. Three rules keep the logic working:
 
 | File | URL | Body hook |
 | --- | --- | --- |
-| `public/index.html` | `/` | `body.page--home[data-page="home"]` |
+| `public/index.html` | `/` | `body.page--home[data-page="home"]`. The opening is `div.intro[data-role="intro"]` with `.intro__mark`, `.intro__word`, `.intro__letter` |
 | `public/intake.html` | `/intake` | `body.page--intake[data-page="intake"]` |
 | `public/tree.html` | `/tree` | `body.page--tree[data-page="tree"]` |
 | `public/404.html` | any unknown URL | `body.page--not-found` |
@@ -167,17 +186,36 @@ Hooks: `data-role` = `intake-form`, `intake-text`, `intake-status`, `intake-erro
 Written by JS (`public/js/path-form.js`): `label.path-form__field.path-form__field--{name}` containing `.path-form__label` and `.path-form__input[data-field="{name}"]`, where name is `name`, `life`, `interests`, `persona_brief`, `horizon_years` or `milestones`.
 In the HTML: `.path-form`, `.path-form__fields`, `.path-form__note`, `.path-form__save`, `details.path-edit`, `details.path-add`.
 
+### tree.html: the map
+
+`div.world-map[data-role="world-map"]`, filled by `public/js/map.js`.
+
+| Element | Class | State classes and attributes |
+| --- | --- | --- |
+| Meadow and foliage pictures | `.world-map__layer`, `.world-map__meadow`, `.world-map__foliage` | |
+| One world (a button) | `.world`, `.world--serenity`, `--midnight`, `--artist`, `--founder` | `.world--active` or `.world--dormant`, `.world--picked` for today's pick, `.world--open` while its sheet is open. `data-role="world"`, `data-world`, `data-oddie-id`, `data-status`, `data-picked`, `data-open` |
+| World picture, label | `.world__art`, `.world__label`, `.world__name`, `.world__note` | |
+| The person, the Now pill | `.world-map__self`, `.world-map__now` | |
+| Paths with no world | `.more-paths`, `.path-chips`, `.path-chip` | `.path-chip--open`, `data-role="path-chip"`, `data-picked` |
+
+**World color:** anything that belongs to an oddie carries `data-world` (`serenity`, `midnight`, `artist`, `founder` or `none`), which sets the CSS variable `--tone`. It is on the worlds, the milestone branches, the oddie's sheet, the rows in Today, and the past-day pills.
+
+Around it: `.map-section`, `.map-section__title`, `.map-section__self`, `.map-section__hint`.
+
 ### tree.html: the tree
 
-An SVG drawn by `public/js/tree.js`. **All spacing is in one place:** the `TREE_SPACING` object and the `layoutTree()` function at the top of that file. Change numbers there to move things. The SVG scales to its container and scrolls sideways inside `.tree-scroll` on small screens (`min-width` on `.tree` in the CSS sets how small it may get).
+An SVG drawn by `public/js/tree.js`. **All spacing is in one place:** the `TREE_SPACING` (wide) and `TREE_SPACING_COMPACT` (phone) objects and the `layoutTree()` function at the top of that file. Change numbers there to move things. The SVG has `data-layout="wide"` or `"compact"`.
 
 | Element | Class | State classes and attributes |
 | --- | --- | --- |
 | The SVG | `.tree` | |
-| One branch (group) | `.tree-branch` | `.tree-branch--active` or `.tree-branch--dormant`, `.tree-branch--picked` for today's pick. `data-oddie-id`, `data-status`, `data-picked` |
+| One branch (group) | `.tree-branch` | `.tree-branch--active` or `.tree-branch--dormant`, `.tree-branch--picked` for today's pick. `data-oddie-id`, `data-status`, `data-picked`, `data-world` |
 | Branch line | `.tree-branch__line` | |
-| Milestone (group) | `.tree-milestone` | `.tree-milestone--reached` or `.tree-milestone--unreached`. `data-milestone-id`, `data-reached` |
+| Milestone (group, a button) | `.tree-milestone` | `.tree-milestone--reached` or `--unreached`, `--next` for the path's next milestone, `--researched` when Nimble has results for it, `--open` while its research sheet is open. `data-milestone-id`, `data-reached`, `data-next`, `data-researched`, `data-sources` |
 | Milestone dot, label | `.tree-milestone__node`, `.tree-milestone__label` | |
+| Research ring, source count | `.tree-milestone__halo`, `.tree-milestone__sources` | |
+| "Next: ..." line (phone layout) | `.tree-branch__next` | |
+| Tap areas | `.tree-milestone__hit`, `.tree-oddie__hit` | |
 | Oddie (group, clickable) | `.tree-oddie` | `.tree-oddie--open` while its panel is open. `data-oddie-id`, `data-open` |
 | Oddie dot, name, years | `.tree-oddie__node`, `.tree-oddie__label`, `.tree-oddie__horizon` | |
 | Now node | `.tree-now`, `.tree-now__node`, `.tree-now__label`, `.tree-now__date` | |
@@ -186,13 +224,24 @@ Around it: `.tree-section`, `.tree-section__title`, `.tree-section__self`, `.tre
 
 ### tree.html: oddie panel and chat
 
-`aside.panel.panel--chat[data-panel="chat"]`. Hidden until an oddie is clicked. Gets `data-oddie-id`, `data-status`, and `data-chat-busy="true"` while a reply is being written.
+`aside.panel.panel--chat[data-panel="chat"]`. Hidden until a world is chosen. Gets `data-oddie-id`, `data-status`, `data-world`, and `data-chat-busy="true"` while a reply is being written. The header holds `svg.oddie-rig[data-role="chat-rig"]` (the character, with `data-outfit`) and `.oddie-header__world[data-role="chat-world"]` (the world's name).
 
 In the HTML: `.panel__header`, `.panel__title`, `.panel__close`, `.oddie-life`, `.oddie-interests`, `.oddie-milestones`, `.oddie-actions`, `.chat__title`, `.chat__empty`, `.chat-log`, `.chat__status`, `.chat-form`, `.chat-form__label`, `.chat-form__input`, `.chat-form__send`.
 
 Written by JS: `.oddie-interests__item`; `.oddie-milestones__item` with `--reached` or `--unreached` and `data-reached` (`tree-page.js`); `li.chat-message.chat-message--user` or `.chat-message--oddie` with `data-message-role`, containing `.chat-message__who` and `.chat-message__text` (`chat.js`).
 
 Hooks: `data-role` = `chat-name`, `chat-life`, `chat-interests`, `chat-milestones`, `chat-empty`, `chat-log`, `chat-status`, `chat-error`, `chat-form`, `chat-input`, `path-edit`, `path-edit-form`, `path-edit-fields`, `path-edit-error`. `data-action` = `chat-close`, `chat-send`, `oddie-toggle-status`, `oddie-delete`, `path-edit-save`.
+
+### tree.html: research sheet
+
+`section.panel.panel--research[data-panel="research"]`. Opens when a milestone is chosen. Gets `data-world`, `data-oddie-id`, `data-milestone-id`, `data-researched`.
+
+In the HTML: `.research__summary`, `.research__run`, `.research__lanes`.
+Written by JS (`public/js/research-panel.js`): `section.lane.lane--{lane}[data-lane]` with `.lane__title`, `.lane__query` and `ul.source-list`; `li.source.source--{kind}` (`--step` when it was picked as a step; `data-source-id`, `data-kind`, `data-step`) with `.source__link`, `.source__meta`, `.source__host`, `.source__badge`, `.source__snippet`.
+
+Hooks: `data-role` = `research-world`, `research-title`, `research-summary`, `research-status`, `research-error`, `research-lanes`. `data-action` = `research-run`, `research-close`.
+
+Under the tree: `ul.tree-legend` with `.tree-legend__item--reached`, `--unreached`, `--researched`.
 
 ### tree.html: Today panel
 
@@ -206,7 +255,7 @@ Written by JS (`public/js/today.js`):
 - `li.step.step--{type}` (`--done` when ticked; `data-step-id`, `data-step-type`, `data-done`) with `.step__label`, `.step__check`, `.step__type`, `.step__title`, `.step__link`. Type is `read`, `attend`, `apply`, `contact` or `practice`. Read and practice steps also get `.step__read` (the Read here button) and, when open, `.step__reader.step__reader--loading`, `--ready` or `--error` (`data-role="step-reader"`, `data-status`).
 - `li.history-strip__day` (`--today` on today; `data-date`, `data-oddie-id`, `data-today`) with `.history-strip__date`, `.history-strip__oddie`.
 
-Hooks: `data-role` = `today-date`, `today-pick`, `branch-list`, `today-status`, `today-error`, `today-error-text`, `step-empty`, `step-list`, `today-reflect`, `history-strip`. `data-action` = `choose-today`, `today-retry`, `today-refresh`, `toggle-step`, `read-step`.
+Hooks: `data-role` = `today-date`, `today-pick`, `branch-list`, `today-status`, `today-error`, `today-error-text`, `step-empty`, `step-list`, `today-research`, `today-research-text`, `today-reflect`, `history-strip`. `data-action` = `choose-today`, `today-retry`, `today-refresh`, `toggle-step`, `read-step`, `today-sources`.
 
 Other hooks on the tree page: `data-action="demo-reset"`, `data-role` = `path-add`, `path-add-form`, `path-add-fields`, `path-add-error`, `data-action="path-add-save"`.
 

@@ -2,8 +2,10 @@
 // and see which branch got each past day.
 import { api, setNotice } from './api.js';
 import { formatDate } from './tree.js';
+import { worldFor } from './worlds.js';
+import { LANE_LABELS } from './research-panel.js';
 
-export function initToday(panel, { refresh, onError }) {
+export function initToday(panel, { refresh, onError, onShowSources = () => {} }) {
   const $ = (selector) => panel.querySelector(selector);
   const els = {
     date: $('[data-role="today-date"]'),
@@ -17,6 +19,9 @@ export function initToday(panel, { refresh, onError }) {
     steps: $('[data-role="step-list"]'),
     refreshSteps: $('[data-action="today-refresh"]'),
     reflect: $('[data-role="today-reflect"]'),
+    research: $('[data-role="today-research"]'),
+    researchText: $('[data-role="today-research-text"]'),
+    showSources: $('[data-action="today-sources"]'),
     history: $('[data-role="history-strip"]'),
   };
 
@@ -44,6 +49,7 @@ export function initToday(panel, { refresh, onError }) {
         item.dataset.oddieId = oddie.id;
         item.dataset.picked = picked;
         item.dataset.status = oddie.status;
+        item.dataset.world = worldFor(state, oddie.id).key;
 
         const button = element('button', 'branch-list__choose', "Choose today's path");
         button.type = 'button';
@@ -118,6 +124,16 @@ export function initToday(panel, { refresh, onError }) {
     const has = state.today_steps.length > 0;
     els.refreshSteps.hidden = !has;
     els.reflect.hidden = !has;
+
+    // Where these steps came from: the research on the milestone they belong to.
+    const milestoneId = has ? state.today_steps[0].milestone_id : null;
+    const research = oddie && (oddie.research || []).find((r) => r.milestone_id === milestoneId);
+    els.research.hidden = !research;
+    if (research) {
+      const lanes = research.lanes.map((lane) => `${(LANE_LABELS[lane.lane] || lane.lane).toLowerCase()} (${lane.count})`).join(', ');
+      els.researchText.textContent = `Picked from ${research.sources.length} pages Nimble found: ${lanes}. `;
+      els.showSources.onclick = () => onShowSources(oddie, oddie.milestones.find((m) => m.id === milestoneId));
+    }
     els.refreshSteps.disabled = busy;
     els.stepEmpty.hidden = has;
     els.stepEmpty.textContent = oddie
@@ -132,6 +148,7 @@ export function initToday(panel, { refresh, onError }) {
         const item = element('li', `history-strip__day${isToday ? ' history-strip__day--today' : ''}`);
         item.dataset.date = day.date;
         item.dataset.oddieId = day.oddie_id;
+        item.dataset.world = worldFor(state, day.oddie_id).key;
         item.dataset.today = isToday;
         item.append(
           element('span', 'history-strip__date', isToday ? 'Today' : formatDate(day.date, { month: 'short', day: 'numeric' })),

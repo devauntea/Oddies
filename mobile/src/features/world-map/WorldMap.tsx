@@ -296,7 +296,9 @@ export function WorldMap({ scale: k, onEnterWorld, onPressSelf, style }: Props) 
       </Animated.View>
       {labelSpot ? (
         <Animated.View style={[styles.labelSlot, labelSpot, { opacity: labelOpacity }]}>
-          <Text style={styles.label} numberOfLines={1}>{labelText}</Text>
+          <Text style={styles.label} numberOfLines={1}>
+            {labelText}
+          </Text>
         </Animated.View>
       ) : null}
     </View>

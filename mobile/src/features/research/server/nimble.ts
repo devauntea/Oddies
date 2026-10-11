@@ -44,9 +44,15 @@ export function nimbleExtract(): ExtractFn | null {
   const nimble = getClient();
   if (!nimble) return null;
   return async (url) => {
-    const response = await nimble.extract.run({ url, formats: ['markdown'] });
+    // main_content runs Readability first, so nav bars, footers and cookie banners are dropped.
+    const response = await nimble.extract.run({
+      url,
+      formats: ['markdown'],
+      markdown_backend: 'main_content',
+    });
     return {
       ok: response.status === 'success',
+      statusCode: response.status_code,
       markdown: response.data.markdown,
       url: response.url,
     };

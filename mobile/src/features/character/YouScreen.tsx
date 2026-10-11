@@ -77,7 +77,9 @@ export function YouScreen() {
         </View>
       </View>
       <View style={[styles.sheet, { paddingBottom: insets.bottom + spacing.lg }]}>
-        <Text accessibilityRole="header" style={styles.title}>You, today</Text>
+        <Text accessibilityRole="header" style={styles.title}>
+          You, today
+        </Text>
         <Text style={styles.greeting}>{GREETING}</Text>
         <View style={styles.actions}>
           <Pressable

@@ -23,9 +23,12 @@ export async function POST(request: Request): Promise<Response> {
     const document = await readDocument(parsed.value.url, { extract: nimbleExtract() });
     return Response.json(document);
   } catch (error) {
+    // Unreadable pages are expected (PDFs, interactive tools, dead links); the app opens them in
+    // the browser instead. Only log real failures.
+    if (error instanceof DocumentUnavailableError) {
+      return Response.json({ error: error.message }, { status: 502 });
+    }
     console.error('[api/document] failed', error);
-    const message =
-      error instanceof DocumentUnavailableError ? error.message : 'Something went wrong.';
-    return Response.json({ error: message }, { status: 502 });
+    return Response.json({ error: 'Something went wrong.' }, { status: 502 });
   }
 }

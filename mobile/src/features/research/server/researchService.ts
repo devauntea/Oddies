@@ -1,9 +1,15 @@
-import { assemblePack, type LaneOutcome, type LaneSearchResult } from '../core/assemblePack';
+import {
+  assemblePack,
+  collectResultUrls,
+  type LaneOutcome,
+  type LaneSearchResult,
+} from '../core/assemblePack';
 import { buildQueryPlan, type SearchQuery } from '../core/queryPlan';
 import type { NormalizedResearchRequest } from '../core/validate';
 import type { ResearchPack } from '../types';
 import { createTtlCache, type TtlCache } from './cache';
 import { buildMockLaneResult } from './fixtures';
+import type { FindDeadLinksFn } from './linkCheck';
 
 /** `signal` is aborted when the shared deadline passes. Implementations should honour it. */
 export type SearchFn = (
@@ -11,7 +17,7 @@ export type SearchFn = (
   options?: { signal?: AbortSignal },
 ) => Promise<LaneSearchResult>;
 
-/** All five searches share this limit, so a phone never waits on a stuck lane. */
+/** All lane searches share this limit, so a phone never waits on a stuck lane. */
 export const SEARCH_DEADLINE_MS = 20_000;
 
 export class ResearchUnavailableError extends Error {
@@ -31,6 +37,8 @@ export class ResearchTimeoutError extends Error {
 export interface ResearchServiceDeps {
   /** Null when no Nimble key is configured: the service then serves mock data. */
   search: SearchFn | null;
+  /** Finds results that are gone (404s) so they're left out. Skipped when absent. */
+  findDeadLinks?: FindDeadLinksFn;
   cache?: TtlCache<ResearchPack>;
   now?: () => Date;
   log?: (message: string, error: unknown) => void;
@@ -91,7 +99,17 @@ export async function runResearch(
     throw controller.signal.aborted ? new ResearchTimeoutError() : new ResearchUnavailableError();
   }
 
-  const pack = assemblePack(request, outcomes, { source: 'nimble', now: now() });
+  let deadUrls = new Set<string>();
+  if (deps.findDeadLinks) {
+    try {
+      deadUrls = await deps.findDeadLinks(collectResultUrls(outcomes));
+    } catch (error) {
+      // Link checking is a nicety: if it breaks, show everything rather than nothing.
+      deps.log?.('Link check failed', error);
+    }
+  }
+
+  const pack = assemblePack(request, outcomes, { source: 'nimble', now: now(), deadUrls });
   // Only cache complete packs, so a transient lane failure isn't remembered for 30 minutes.
   if (pack.warnings.length === 0) deps.cache?.set(key, pack);
   return pack;

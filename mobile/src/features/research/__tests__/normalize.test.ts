@@ -1,5 +1,5 @@
 import { normalizeUrl } from '../core/ids';
-import { dedupeResources, toResource } from '../core/normalize';
+import { dedupeResources, isFileUrl, plainSnippet, toResource } from '../core/normalize';
 
 describe('normalizeUrl', () => {
   it('strips tracking params, hash and trailing slash, and lower-cases the host', () => {
@@ -58,5 +58,35 @@ describe('toResource', () => {
     const b = toResource({ title: 'b', url: 'https://example.com/a/' }, 'practice', 'article');
     expect(a?.id).toBe(b?.id);
     expect(dedupeResources([a!, b!])).toEqual([a]);
+  });
+});
+
+describe('isFileUrl', () => {
+  it.each([
+    ['https://example.com/guide.pdf', true],
+    ['https://example.com/notes.docx.pdf?dl=1', true],
+    ['https://example.com/slides.PPTX', true],
+    ['https://example.com/pdf-guide', false],
+    ['https://www.youtube.com/watch?v=1', false],
+    ['not a url', false],
+  ])('%s -> %s', (url, expected) => {
+    expect(isFileUrl(url)).toBe(expected);
+  });
+});
+
+describe('plainSnippet', () => {
+  it('strips markdown and a repeated title from search snippets', () => {
+    expect(
+      plainSnippet(
+        '# How to Get Into Music Production\n## Key Takeaways\n- **You can start** with a [laptop](/gear) ![img](/a.png)',
+        'How to Get Into Music Production',
+      ),
+    ).toBe('Key Takeaways You can start with a laptop');
+  });
+
+  it('leaves ordinary text alone', () => {
+    expect(plainSnippet('Learn C# and F# in 2026 - a 3-step guide.', 'Other')).toBe(
+      'Learn C# and F# in 2026 - a 3-step guide.',
+    );
   });
 });

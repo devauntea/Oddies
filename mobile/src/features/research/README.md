@@ -14,14 +14,32 @@ Timeline / branch picker
 src/app/research/[topic].tsx ──► ResearchPackView ──► useResearch() ──► POST /api/research
                                                                           │ (server only)
                                                                           ▼
-                                     parseResearchRequest → buildQueryPlan → Nimble search ×5 lanes
+                                     parseResearchRequest → buildQueryPlan → Nimble search ×6 lanes
                                                                           │
                                                                           ▼
-                                     assemblePack: normalise + dedupe → summary + resources + tasks
+                                     link check: drop 404s → assemblePack: normalise + dedupe
+                                                             → summary + resources + tasks
 ```
 
-Tapping an article or study doc opens `src/app/research/read.tsx`, which calls `POST /api/document`
-(Nimble Extract → markdown). Videos, communities and events open in the system browser.
+## Opening resources
+
+Every source should be something the user can actually read or watch on their phone:
+
+| Resource                            | Opens in                                                                |
+| ----------------------------------- | ----------------------------------------------------------------------- |
+| Video (YouTube, Vimeo)              | YouTube app if installed, Safari otherwise                              |
+| File (PDF, Word, PowerPoint)        | In-app browser, whose built-in viewer renders it                        |
+| Web article / study page / practice | In-app reader (`src/app/research/read.tsx`, rendered by `MarkdownView`) |
+| Community, event                    | In-app browser                                                          |
+
+The reader calls `POST /api/document`: Nimble Extract with `markdown_backend: 'main_content'`
+(Readability), so nav bars and footers are dropped. Pages with nothing readable (HTTP errors, PDF
+bytes, interactive tools or index pages with under 400 characters of prose) return a 502, and the
+reader opens the page in the browser instead.
+
+Before a pack is assembled, every result URL gets a free HEAD request (confirmed with GET, since
+some servers 404 every HEAD). Only a definite 404/410 or a host that no longer exists removes a
+result; bot walls (403), timeouts and 5xx keep it.
 
 ## Lanes → tasks
 
@@ -32,6 +50,7 @@ Your Life_:
 | ----------- | ------------------------------------------------- | ----------------------------------------------------- |
 | `overview`  | "how to get started with X", `include_answer`     | Summary + **learn** (fallback)                        |
 | `documents` | "X study guide", `content_type: ['documents']`    | **learn** (preferred: read a real study doc)          |
+| `videos`    | "X lesson", `include_domains: ['youtube.com']`    | **learn** (fallback: watch a lesson)                  |
 | `practice`  | "X practice exercises"                            | **practice**                                          |
 | `community` | "X community forum where beginners ask questions" | **conversation** (prototype conversation)             |
 | `events`    | "X workshops classes events", last month          | **experience** (prototype experience)                 |
@@ -42,7 +61,7 @@ back to a generic version. Callers can pass `lanes` to run fewer searches and sp
 
 ## Reliability and quality
 
-- **Shared deadline.** The five searches share one 20 s limit (`SEARCH_DEADLINE_MS`). Lanes that
+- **Shared deadline.** The six searches share one 20 s limit (`SEARCH_DEADLINE_MS`). Lanes that
   finish in time are kept; the rest become warnings. If nothing finishes, the API returns 504.
 - **Refresh.** `{ "refresh": true }` skips the 30-minute server cache. The app's Refresh button
   uses it. Only complete packs (no warnings) are cached.

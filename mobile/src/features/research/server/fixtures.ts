@@ -35,6 +35,15 @@ const MOCK_RESULTS: Record<Lane, (topic: string) => LaneSearchResult> = {
       },
     ],
   }),
+  videos: (topic) => ({
+    results: [
+      {
+        title: `${capitalize(topic)} for complete beginners`,
+        url: `https://www.youtube.com/watch?v=mock-lesson-${slug(topic)}`,
+        description: `A full first lesson in ${topic}, start to finish.`,
+      },
+    ],
+  }),
   practice: (topic) => ({
     results: [
       {

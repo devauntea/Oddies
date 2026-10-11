@@ -4,15 +4,15 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Oddies</title>
-    <meta name="description" content="One you, many possibilities. Oddies draws the lives you could still live as a tree and helps you work on one branch today.">
+    <meta name="description" content="One you, many possibilities. The paths behind you are set. The ones ahead are all still open. Meet the you at the end of each one, then give one of them today.">
     <link rel="icon" href="/img/logo.webp">
+    <!-- Lets the page hide things it is about to animate in. Without JS everything is simply visible. -->
+    <script>document.documentElement.classList.add('js');</script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=Nunito+Sans:opsz,wght@6..12,400;6..12,600;6..12,700&family=Pacifico&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT,WONK@0,9..144,400..600,0..100,0..1;1,9..144,400..600,0..100,0..1&family=Nunito+Sans:opsz,wght@6..12,400;6..12,600;6..12,700&family=Pacifico&display=swap">
     <noscript><style>.intro { display: none; }</style></noscript>
     <link rel="stylesheet" href="/css/base.css">
-    <link rel="stylesheet" href="/css/world-map.css">
-    <link rel="preload" as="fetch" href="/assets/scene-layout.json" crossorigin>
     <script src="https://browser.sentry-cdn.com/11.6.0/bundle.tracing.min.js" integrity="sha384-yktoq3bnSR9ZyyKjW/n9Co8AAItq1N/6OuvY9mTtMhl/IBpCbsDs6N6hugod29Hc" crossorigin="anonymous"></script>
     <script src="/config.js"></script>
     <script src="/js/sentry-init.js"></script>
@@ -25,23 +25,36 @@
         <text class="intro__word" x="450" y="250" text-anchor="middle"><tspan class="intro__letter" style="--i: 0">O</tspan><tspan class="intro__letter" style="--i: 1">d</tspan><tspan class="intro__letter" style="--i: 2">d</tspan><tspan class="intro__letter" style="--i: 3">i</tspan><tspan class="intro__letter" style="--i: 4">e</tspan><tspan class="intro__letter" style="--i: 5">s</tspan></text>
       </svg>
     </div>
-    <main class="home">
-      <section class="home__map world-map" data-role="world-map" aria-label="Your map of possible lives">
-        <p class="world-map__fallback">Loading your map…</p>
-      </section>
-      <div class="home__words home__intro">
-        <h1 class="home__title"><img class="home__logo" src="/img/logo.webp" alt="Oddies" width="1774" height="887"></h1>
-        <p class="home__promise">One you, many possibilities.</p>
-        <p class="home__line">Every life you could still live, drawn as one tree. Pick a branch to work on today.</p>
-        <div class="home__actions">
-          <button type="button" class="button" data-action="see-demo">See the demo</button>
-          <a class="button" href="/intake" data-action="start-own">Start my own</a>
+
+    <!-- The illustrated world map is not on this page. The team's version of it
+         (public/js/world-map.js, public/css/world-map.css, assets/scene-layout.json)
+         is in the repo and ready to be placed where it belongs. -->
+    <div class="hero" data-role="hero">
+      <!-- The life paths, drawn by /js/paths.js. Behind you: set. Ahead: all still open.
+           On wide screens it sits behind the words and grows out of the dot after "One you". -->
+      <svg class="hero__paths" data-role="paths" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg"></svg>
+
+      <header class="hero__bar">
+        <img class="hero__logo" src="/img/logo.webp" alt="Oddies" width="1774" height="887">
+      </header>
+
+      <main class="hero__content">
+        <h1 class="hero__title">
+          <span class="hero__line"><span class="hero__line-inner">One you<span class="visually-hidden">,</span><span class="hero__today" data-role="today-dot" aria-hidden="true"></span></span></span>
+          <span class="hero__line hero__line--many"><span class="hero__line-inner"><em>many possibilities.</em></span></span>
+        </h1>
+        <p class="hero__copy">The paths behind you are set. The ones ahead are all still open. Meet the you at the end of each one, then give one of them today.</p>
+        <div class="hero__actions">
+          <button type="button" class="button hero__primary" data-action="see-demo">
+            See the demo
+            <svg class="hero__arrow" viewBox="0 0 20 20" aria-hidden="true" focusable="false"><path d="M3 10h13M11 5l5 5-5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <a class="hero__secondary" href="/intake" data-action="start-own">Start my own</a>
         </div>
         <p class="notice" data-role="notice" role="status" hidden></p>
-      </div>
-      <img class="home__scene" src="/img/map/scene.webp" alt="An illustrated meadow. A woman stands at the center, with paths leading to a temple garden, a night city, an art cottage and a glass studio." width="800" height="1200">
-    </main>
+      </main>
+    </div>
+
     <script type="module" src="/js/home.js"></script>
-    <script type="module" src="/js/world-map.js"></script>
   </body>
 </html>

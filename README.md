@@ -33,11 +33,13 @@ All four come from environment variables. None are in the code.
 | Variable | What it is |
 | --- | --- |
 | `GEMINI_API_KEY` | Google AI Studio key |
-| `GEMINI_MODEL` | Model id. Defaults to `gemini-3.8-flash` |
+| `GEMINI_MODEL` | Model id. Defaults to `gemini-3.5-flash-lite` |
 | `NIMBLE_API_KEY` | Nimble API key |
 | `SENTRY_DSN` | DSN of a Sentry project. Used by both server and browser |
 
-Optional: `GEMINI_THINKING_LEVEL` (for example `low` for faster replies), `PORT`, `DB_PATH`.
+Optional: `GEMINI_FALLBACK_MODELS` (comma separated, tried in order when the main model answers 503 or 429; defaults to `gemini-3.6-flash,gemini-3.8-flash`), `GEMINI_THINKING_LEVEL`, `PORT`, `DB_PATH`.
+
+Why that default: on 2026-10-11 the same chat request took about 1.2 seconds on `gemini-3.5-flash-lite`, about 4.5 on `gemini-3.6-flash`, and 23 to 33 on `gemini-3.8-flash`, which also returned a 503 one time in three.
 
 **Local, option 1: macOS keychain (nothing on disk).** `npm run dev` reads these automatically.
 
@@ -55,7 +57,7 @@ One time setup. The app name is `oddies` (set in `fly.toml`).
 ```bash
 fly apps create oddies
 fly volumes create oddies_data --region ewr --size 1 -a oddies --yes
-fly secrets set GEMINI_API_KEY=... GEMINI_MODEL=gemini-3.8-flash NIMBLE_API_KEY=... SENTRY_DSN=... -a oddies
+fly secrets set GEMINI_API_KEY=... GEMINI_MODEL=gemini-3.5-flash-lite NIMBLE_API_KEY=... SENTRY_DSN=... -a oddies
 fly deploy --ha=false
 ```
 
@@ -125,7 +127,7 @@ Not ported, on purpose: mock mode and generic tasks with no link. This app never
 
 ## Sentry
 
-- Server: `instrument.js`, loaded with `node --import`. Every Gemini call is a `gen_ai.generate_content` span with the model and input, output and total token counts (`src/gemini.js`). Every Nimble call is a `nimble.search` span with the query, lane and result count, or a `nimble.extract` span (`src/nimble.js`). A Today request wraps both in a `today.build_steps` span that also records how many suggested steps were dropped by the URL check.
+- Server: `instrument.js`, loaded with `node --import`. Every Gemini call is a `gen_ai.generate_content` span with the model and input, output and total token counts (`src/gemini.js`). A retry or a fallback to another model is its own span, so a trace shows which model answered. Every Nimble call is a `nimble.search` span with the query, lane and result count, or a `nimble.extract` span (`src/nimble.js`). A Today request wraps both in a `today.build_steps` span that also records how many suggested steps were dropped by the URL check.
 - Browser: the Sentry CDN bundle plus `public/js/sentry-init.js`. Page loads and API calls are traced, and the trace id is passed to the server, so one click shows up as one trace from browser to Gemini and Nimble.
 
 ## For designers

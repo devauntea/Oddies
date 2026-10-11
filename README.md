@@ -112,14 +112,14 @@ The lanes, their Nimble settings, the URL cleanup and the result-to-task rules a
 
 | Lane | Finds | Becomes step type | Nimble settings |
 | --- | --- | --- | --- |
-| `overview` | how to get started | `read` | 6 results |
+| `overview` | how to get started | `read` | 6 results, `standard` depth |
 | `documents` | a real study document | `read` | 4 results, `content_type: ['documents']` |
 | `practice` | something hands-on | `practice` | 5 results |
 | `community` | people already doing it (prototype conversation) | `contact` | 5 results |
-| `events` | a class or meetup soon (prototype experience) | `attend` | 4 results, `time_range: 'month'` |
+| `events` | a class or meetup soon (prototype experience) | `attend` | 6 results, `standard` depth |
 | `apply` | a program or role to apply to | `apply` | 5 results |
 
-All lanes use `search_depth: 'lite'` to stay inside the 20 second limit. `apply` is new here; the other five are the team's.
+The other lanes use `search_depth: 'lite'`. `apply` is new here; the other five are the team's. One team setting changed after live testing: events no longer uses `time_range: 'month'`, because it returned general category pages where the unfiltered search returned specific classes.
 
 Also ported: reading a page inside the app. Read and practice steps get a Read here button that loads the page as text through Nimble Extract. Only URLs of saved steps can be read.
 

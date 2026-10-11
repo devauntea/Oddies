@@ -1,7 +1,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const { startApp } = require('./helpers');
-const { keepRealSteps } = require('../src/today');
+const { keepRealSteps, readableText } = require('../src/today');
 const { HttpError } = require('../src/errors');
 const research = require('../src/research');
 
@@ -79,6 +79,7 @@ test('today records the pick and returns steps for the next unreached milestone'
   assert.equal(res.json.milestone.title, 'Publish a portfolio with five projects');
   assert.equal(res.json.steps.length, 3);
   assert.deepEqual(res.json.lanes, ['events', 'overview', 'apply']);
+  assert.deepEqual(res.json.lane_results, { events: 2, overview: 1, apply: 1 }, 'the duplicate meetup counts once, for the first lane');
   assert.match(gemini.calls[0].contents, /New York, NY/, 'the plan prompt carries the city');
   assert.match(gemini.calls[0].contents, /Today is \d{4}-\d{2}-\d{2}/, 'and the date');
   assert.match(gemini.calls[1].contents, /\(lane: events, kind: event\) Portfolio review night/, 'the pick prompt lists Nimble results by lane');
@@ -102,14 +103,13 @@ test("each lane searches with the team's Nimble settings", async (t) => {
 
   assert.deepEqual(nimble.searches[0], {
     query: PLAN[0].query,
-    max_results: 4,
-    search_depth: 'lite',
-    time_range: 'month',
+    max_results: 6,
+    search_depth: 'standard',
     output_format: 'plain_text',
     lane: 'events',
   });
   assert.equal(nimble.searches[1].lane, 'overview');
-  assert.equal(nimble.searches[1].time_range, undefined);
+  assert.equal(nimble.searches[2].search_depth, 'lite');
   assert.deepEqual(research.buildSearch('documents', 'type study guide').content_type, ['documents']);
 });
 
@@ -126,9 +126,29 @@ test('steps with URLs Nimble did not return are dropped', async (t) => {
 
   const res = await app.call('POST', '/api/today', { oddie_id: 1 });
   assert.equal(res.status, 200);
+  const urls = res.json.steps.map((s) => s.url);
+  // The two real picks survive, the three invented ones are gone, and the gap
+  // is filled with another real result rather than left at two.
+  assert.deepEqual(urls.slice(0, 2), ['https://example.org/events/portfolio-night', 'https://example.com/portfolio-guide']);
+  assert.equal(urls.length, 3);
+  const realUrls = Object.values(RESULTS).flat().map((r) => r.url);
+  for (const url of urls) assert.ok(realUrls.includes(url), `${url} came from Nimble`);
+  assert.ok(!urls.some((url) => /made-up|events\/other|call them/.test(url)));
+});
+
+test('if Gemini picks fewer than 3, the lane rules top it up to 3 from unused results', async (t) => {
+  const app = await startApp({ gemini: fakeGemini([GOOD_PICKS[1]]), nimble: fakeNimble() });
+  t.after(app.close);
+
+  const res = await app.call('POST', '/api/today', { oddie_id: 1 });
+  assert.equal(res.status, 200);
   assert.deepEqual(
-    res.json.steps.map((s) => s.url),
-    ['https://example.org/events/portfolio-night', 'https://example.com/portfolio-guide']
+    res.json.steps.map((s) => [s.type, s.url]),
+    [
+      ['read', 'https://example.com/portfolio-guide'],
+      ['attend', 'https://example.org/events/portfolio-night'],
+      ['apply', 'https://example.net/apprentice?year=2026'],
+    ]
   );
 });
 
@@ -223,7 +243,8 @@ test('one failed search out of three still gives steps from the others', async (
 
   const res = await app.call('POST', '/api/today', { oddie_id: 1 });
   assert.equal(res.status, 200);
-  assert.equal(res.json.steps.length, 2, 'the apply step is gone because its result never came back');
+  assert.equal(res.json.steps.length, 3, 'still three steps, topped up from the lanes that answered');
+  assert.ok(!res.json.steps.some((s) => s.url.includes('apprentice')), 'the apply result never came back, so it is not a step');
 });
 
 test('asking again the same day reuses steps unless refresh is set', async (t) => {
@@ -304,6 +325,11 @@ test("a step's page can be read in the app, but only a saved step's", async (t) 
   assert.equal(blocked.json.error, 'document_unavailable');
 
   assert.equal((await app.call('POST', '/api/steps/999/read')).status, 404);
+
+  assert.equal(
+    readableText('![banner](https://x.test/a.jpg)\nRead the [full guide](https://x.test/guide) first.   \n\n\n\nThen paint.'),
+    'Read the full guide first.\n\nThen paint.'
+  );
 });
 
 test('keepRealSteps matches URLs loosely but saves the URL Nimble gave', () => {

@@ -8,6 +8,16 @@ const { HttpError } = require('./errors');
 const SEARCH_TIMEOUT_MS = 20_000;
 const EXTRACT_TIMEOUT_MS = 45_000;
 
+// How a page is fetched for the reader. Measured on 2026-10-11: with
+// rendering off and main_content on, an article came back clean in about 2.3
+// seconds. The SDK defaults took 37 seconds and led with the site's menus.
+// So the quick way goes first, and a rendered fetch is the backup for pages
+// that refuse a plain request.
+const EXTRACT_TRIES = [
+  { params: { render: false, markdown_backend: 'main_content' }, timeout: 12_000 },
+  { params: { render: 'auto', markdown_backend: 'main_content' }, timeout: 40_000 },
+];
+
 // `client` lets tests pass a stand-in for the SDK.
 function createNimble({ apiKey = process.env.NIMBLE_API_KEY, client } = {}) {
   const key = (apiKey || '').trim();
@@ -65,17 +75,33 @@ function createNimble({ apiKey = process.env.NIMBLE_API_KEY, client } = {}) {
     return Sentry.startSpan(
       { name: 'nimble extract', op: 'nimble.extract', attributes: { 'nimble.url': url } },
       async (span) => {
-        try {
-          const response = await nimble.extract.run({ url, formats: ['markdown'] });
-          const markdown = String((response.data && response.data.markdown) || '').trim();
-          span.setAttributes({ 'nimble.status': String(response.status), 'nimble.markdown_chars': markdown.length });
-          return { ok: response.status === 'success', markdown, url: response.url || url };
-        } catch (error) {
-          span.setStatus({ code: 2, message: 'internal_error' });
-          Sentry.captureException(error);
-          console.error(`Nimble extract failed for ${url}:`, error.message);
-          throw error;
+        let lastError = null;
+        for (const [index, attempt] of EXTRACT_TRIES.entries()) {
+          try {
+            const response = await nimble.extract.run(
+              { url, formats: ['markdown'], ...attempt.params },
+              { timeout: attempt.timeout, maxRetries: 0 }
+            );
+            const markdown = String((response.data && response.data.markdown) || '').trim();
+            if (response.status === 'success' && markdown) {
+              span.setAttributes({
+                'nimble.status': String(response.status),
+                'nimble.markdown_chars': markdown.length,
+                'nimble.extract_try': index + 1,
+                'nimble.rendered': attempt.params.render !== false,
+              });
+              return { ok: true, markdown, url: response.url || url };
+            }
+            lastError = new Error(`Nimble extract returned ${response.status} with no text`);
+          } catch (error) {
+            lastError = error;
+          }
+          console.error(`Nimble extract try ${index + 1} failed for ${url}:`, lastError.message);
         }
+        span.setAttribute('nimble.markdown_chars', 0);
+        span.setStatus({ code: 2, message: 'internal_error' });
+        Sentry.captureException(lastError);
+        return { ok: false, markdown: '', url };
       }
     );
   }

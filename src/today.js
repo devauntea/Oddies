@@ -15,6 +15,7 @@ const { QUERY_SYSTEM, queryPrompt, QUERY_SCHEMA, PICK_SYSTEM, pickPrompt, PICK_S
 
 const NIMBLE_TIMEOUT_MS = 20_000;
 const MAX_RESULTS_FOR_MODEL = 24;
+const MIN_STEPS = 3;
 const MAX_DOCUMENT_CHARS = 60_000;
 
 // The URL check. Keeps only steps whose URL is one Nimble returned, and saves
@@ -116,8 +117,16 @@ async function pickSteps({ gemini, context, resources }) {
     if (!(error instanceof HttpError)) throw error;
   }
   const kept = keepRealSteps(proposed, resources);
-  if (kept.length) return { steps: kept, proposed: proposed.length, source: 'gemini' };
-  return { steps: research.stepsFromLanes(resources), proposed: proposed.length, source: 'lane_rules' };
+  if (!kept.length) return { steps: research.stepsFromLanes(resources), proposed: proposed.length, source: 'lane_rules' };
+
+  // Gemini sometimes picks fewer than 3 even with plenty to choose from. Top
+  // up to 3 with the lane rules, from results it did not use.
+  if (kept.length < MIN_STEPS) {
+    const used = new Set(kept.map((step) => research.normalizeUrl(step.url)));
+    const extra = research.stepsFromLanes(resources.filter((r) => !used.has(r.key)));
+    kept.push(...extra.slice(0, MIN_STEPS - kept.length));
+  }
+  return { steps: kept, proposed: proposed.length, source: 'gemini' };
 }
 
 // Records the pick and returns { pick, milestone, steps }.
@@ -143,9 +152,21 @@ async function buildToday({ db, gemini, nimble, oddieId, date, refresh = false }
     async (span) => {
       const context = { self: store.getSelf(db), oddie, milestone, today: date };
 
+      const clock = [Date.now()];
+      const lap = () => clock.push(Date.now()) && clock.at(-1) - clock.at(-2);
+
       const { plan, source: planSource } = await planSearches({ gemini, context });
+      const planMs = lap();
       const { resources, failed } = await searchAll(nimble, plan);
+      const searchMs = lap();
       const { steps: kept, proposed, source: pickSource } = await pickSteps({ gemini, context, resources });
+      const pickMs = lap();
+
+      // How many results each lane brought back, e.g. { events: 6, overview: 5 }.
+      const laneResults = Object.fromEntries(plan.map((p) => [p.lane, resources.filter((r) => r.lane === p.lane).length]));
+      console.log(
+        `Today for oddie ${oddie.id}: lanes ${JSON.stringify(laneResults)}, ${kept.length} steps kept of ${proposed} proposed, plan ${planMs}ms (${planSource}), search ${searchMs}ms, pick ${pickMs}ms (${pickSource})`
+      );
 
       span.setAttributes({
         'oddies.lanes': plan.map((p) => p.lane).join(','),
@@ -156,6 +177,9 @@ async function buildToday({ db, gemini, nimble, oddieId, date, refresh = false }
         'oddies.steps_proposed': proposed,
         'oddies.steps_kept': kept.length,
         'oddies.steps_dropped': pickSource === 'gemini' ? proposed - kept.length : proposed,
+        'oddies.plan_ms': planMs,
+        'oddies.search_ms': searchMs,
+        'oddies.pick_ms': pickMs,
       });
       if (!kept.length) {
         throw new HttpError(502, 'no_real_steps', 'Search did not return anything usable. Try again.', { retryable: true });
@@ -167,9 +191,20 @@ async function buildToday({ db, gemini, nimble, oddieId, date, refresh = false }
         date,
         steps: kept,
       });
-      return { pick, milestone, steps, lanes: plan.map((p) => p.lane), reused: false };
+      return { pick, milestone, steps, lanes: plan.map((p) => p.lane), lane_results: laneResults, reused: false };
     }
   );
+}
+
+// The reader shows plain text, so pictures are dropped and links are reduced
+// to their words.
+function readableText(markdown) {
+  return String(markdown)
+    .replace(/!\[[^\]]*\]\([^)]*\)/g, '')
+    .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')
+    .replace(/[ \t]+\n/g, '\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
 }
 
 // Loads a step's page as markdown through Nimble Extract so it can be read in
@@ -192,15 +227,17 @@ async function readStep({ db, nimble, stepId }) {
   }
   if (!result.ok || !result.markdown) throw unavailable();
 
-  const truncated = result.markdown.length > MAX_DOCUMENT_CHARS;
-  const heading = result.markdown.match(/^#{1,2}\s+(.+)$/m);
+  const text = readableText(result.markdown);
+  if (!text) throw unavailable();
+  const truncated = text.length > MAX_DOCUMENT_CHARS;
+  const heading = text.match(/^#{1,2}\s+(.+)$/m);
   return {
     step_id: step.id,
     url: step.url,
     title: heading ? heading[1].trim() : step.title,
-    markdown: truncated ? result.markdown.slice(0, MAX_DOCUMENT_CHARS) : result.markdown,
+    markdown: truncated ? text.slice(0, MAX_DOCUMENT_CHARS) : text,
     truncated,
   };
 }
 
-module.exports = { buildToday, readStep, keepRealSteps, cleanPlan, NIMBLE_TIMEOUT_MS };
+module.exports = { buildToday, readStep, readableText, keepRealSteps, cleanPlan, NIMBLE_TIMEOUT_MS };

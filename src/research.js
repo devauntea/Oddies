@@ -9,6 +9,11 @@
 // What is different here: Gemini chooses 3 lanes and writes their queries (the
 // rules below are the fallback), steps use this app's five step types, and
 // there is no mock mode and no generic task. Every step is a real Nimble result.
+//
+// One setting changed after testing against live Nimble on 2026-10-11: the
+// events lane no longer uses time_range 'month'. With it, "oil painting
+// classes New York" returned general category pages. Without it, the same
+// search returned specific classes (92NY, a weekly class on Eventbrite).
 
 // One lane is one Nimble search.
 //   type:   the step type a result from this lane becomes
@@ -19,7 +24,7 @@ const LANES = {
   overview: {
     type: 'read',
     kind: 'article',
-    params: { max_results: 6, search_depth: 'lite' },
+    params: { max_results: 6, search_depth: 'standard' },
     shape: 'how to get started with X for beginners',
     purpose: 'learn the field',
   },
@@ -47,7 +52,7 @@ const LANES = {
   events: {
     type: 'attend',
     kind: 'event',
-    params: { max_results: 4, search_depth: 'lite', time_range: 'month' },
+    params: { max_results: 6, search_depth: 'standard' },
     shape: 'X workshops classes events CITY',
     purpose: 'a class, workshop or meetup to go to in the next few weeks (a prototype experience)',
   },

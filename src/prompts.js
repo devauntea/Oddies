@@ -156,7 +156,7 @@ const QUERY_SCHEMA = {
 const PICK_SYSTEM = [
   'You pick steps a person can take today toward a milestone. You may ONLY pick from the numbered search results you are given.',
   'Each result is tagged with the lane it came from and the kind of page it is. The lanes are a loop: learn the field (overview, documents), try it (practice), talk to people doing it (community), go see it (events), and apply.',
-  'Pick the 3 to 5 results that are the most concrete and doable. Take at most 2 from one lane so the day has a mix. Skip results that are off topic, ads, or lists with nothing to act on. If fewer than 3 are good, return fewer.',
+  'Pick 3 to 5 results that are concrete and doable. Cover every lane that has a usable result before you take a second step from any lane, and take at most 2 from one lane, so the day has a mix. A page listing classes, events or openings counts as usable: the step is to choose one from it. Skip results that are off topic or ads. If fewer than 3 are good, return fewer.',
   'For each step:',
   '- url: copy the result URL exactly, character for character. Never write a URL that is not in the results.',
   '- title: one short instruction starting with a verb, saying what to do with that page. Use only facts in the result title and text. Do not add dates, prices, or names that are not there.',

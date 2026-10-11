@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Your tree | Oddies</title>
+    <meta name="description" content="Your possible lives, drawn as branches. Talk to any of them and pick one to work on today.">
+    <link rel="stylesheet" href="/css/base.css">
+  </head>
+  <body class="page page--tree" data-page="tree">
+    <header class="site-header">
+      <a class="site-header__home" href="/">Oddies</a>
+      <nav class="site-header__nav" aria-label="Site">
+        <a href="/intake">Start my own</a>
+      </nav>
+    </header>
+
+    <p class="notice" data-role="notice" role="status" hidden></p>
+
+    <main class="tree-page">
+      <section class="tree-section" aria-labelledby="tree-heading">
+        <h1 class="tree-section__title" id="tree-heading">Your tree</h1>
+        <p class="tree-section__self" data-role="self-line"></p>
+        <div class="tree-scroll" data-role="tree-scroll" role="region" aria-label="Tree, scrolls sideways" tabindex="0">
+          <svg class="tree" data-role="tree" role="group" xmlns="http://www.w3.org/2000/svg"></svg>
+        </div>
+        <p class="tree-section__hint">Select the node at the end of a branch to open that oddie.</p>
+      </section>
+
+      <div class="panels">
+        <aside class="panel panel--chat" data-panel="chat" aria-labelledby="chat-heading" hidden>
+          <header class="panel__header">
+            <h2 class="panel__title" id="chat-heading" data-role="chat-name" tabindex="-1"></h2>
+            <button type="button" class="panel__close" data-action="chat-close">Close</button>
+          </header>
+          <p class="oddie-life" data-role="chat-life"></p>
+          <h3 class="oddie-interests__title">Interests</h3>
+          <ul class="oddie-interests" data-role="chat-interests"></ul>
+          <h3 class="oddie-milestones__title">Milestones</h3>
+          <ol class="oddie-milestones" data-role="chat-milestones"></ol>
+        </aside>
+      </div>
+    </main>
+
+    <script type="module" src="/js/tree-page.js"></script>
+  </body>
+</html>

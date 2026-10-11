@@ -9,6 +9,12 @@ piece of **advice**, a little like a desktop assistant that peeks in. She waves 
 - **What:** `core/messages.ts`, a curated library written to the playbook tone (style.md §12):
   warm, short, inviting; never telling the user who they are. Some messages come from a world and
   offer "Visit {world}". Nothing is generated.
+- **Your paths first:** if a goal on a world path (`world-paths`) has a plan date of today, she
+  opens with it ("Today's the day you planned: …") and offers "Open my path". If a planned day
+  passed and the goal is still open, she asks whether it still feels right. Only goals the user
+  can do now count, and the text only repeats their own goal and date (`core/nudge.ts`).
+- **Next step under world thoughts:** a thought from a world shows that world's real next goal
+  ("Next on your path: …") from the user's saved progress.
 - **Which:** `messageForDay` is deterministic per day and walks the library with a coprime
   stride, so consecutive days differ and every message appears before any repeats. "Another"
   steps to the next one.
@@ -17,8 +23,9 @@ piece of **advice**, a little like a desktop assistant that peeks in. She waves 
 - **Accessibility:** the message is announced to screen readers; Reduce Motion swaps the slide for
   a fade and keeps her still; the bubble unmounts when closed.
 
-Mounted by `world-map/WorldMapScreen.tsx`. It imports `world-map/layout` and `world-map/types`
-directly (not the index) to avoid a require cycle.
+Mounted by `world-map/WorldMapScreen.tsx`. It imports `world-map/layout`, `world-map/types` and
+the `world-paths` modules it needs directly (not their indexes): both indexes lead back to the
+home map, which would make a require cycle.
 
 ## Adding messages
 

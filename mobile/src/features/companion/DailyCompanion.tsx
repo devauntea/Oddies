@@ -14,12 +14,15 @@ import { OddieCharacter } from '@/features/character';
 // Direct module imports: the world-map index renders this component, so importing it would cycle.
 import { findWorld } from '@/features/world-map/layout';
 import type { WorldId } from '@/features/world-map/types';
+import { WORLD_PATHS } from '@/features/world-paths/data';
+import { useGoalProgress } from '@/features/world-paths/progressStore';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { brand, colors, radius, scene, spacing, typography } from '@/theme/tokens';
 
 import { companionActions, useCompanionState } from './companionStore';
 import { dayKey, messageForDay, nextMessage, shouldPopUp, speakingMs } from './core/daily';
 import type { CompanionMessage } from './core/messages';
+import { isPlanMessage, nextStepTitle, pathNudge } from './core/nudge';
 
 const NATIVE_DRIVER = Platform.OS !== 'web';
 /** Wait for the map's arrive animation (~1.1 s) so she doesn't land on a half-built scene. */
@@ -36,11 +39,13 @@ export interface DailyCompanionProps {
 /**
  * The present self pops up on the home screen once a day with a short affirmation or a small
  * piece of advice, waves and "talks" while the bubble appears. After she's dismissed, a small
- * peek button keeps her one tap away. Content is curated (core/messages.ts), never generated.
+ * peek button keeps her one tap away. She opens with the user's own path plan when one is due
+ * (core/nudge.ts); otherwise a curated thought (core/messages.ts). Nothing is generated.
  */
 export function DailyCompanion({ bottom, onOpenWorld }: DailyCompanionProps) {
   const reduceMotion = useReducedMotion();
   const { state, hydrated } = useCompanionState();
+  const { progress: goals, ready: goalsReady } = useGoalProgress();
   const today = useMemo(() => dayKey(new Date()), []);
   const [message, setMessage] = useState<CompanionMessage>(() => messageForDay(today));
   const [open, setOpen] = useState(false);
@@ -49,6 +54,14 @@ export function DailyCompanion({ bottom, onOpenWorld }: DailyCompanionProps) {
   /** Kept true through the close animation, then the bubble unmounts (and leaves the a11y tree). */
   const [mounted, setMounted] = useState(false);
   const [progress] = useState(() => new Animated.Value(0));
+
+  /** What she says first today: a due plan beats the curated thought of the day. */
+  const opening = useMemo(
+    () => pathNudge(WORLD_PATHS, goals, today)?.message ?? messageForDay(today),
+    [goals, today],
+  );
+  /** After a plan, go to the thought of the day; then walk the library. */
+  const another = () => (isPlanMessage(message) ? messageForDay(today) : nextMessage(message));
 
   /** Shows `next`: she waves, "talks" for a reading-length beat, and screen readers hear it. */
   const say = (next: CompanionMessage) => {
@@ -66,13 +79,14 @@ export function DailyCompanion({ bottom, onOpenWorld }: DailyCompanionProps) {
 
   // Pop up by herself once a day.
   useEffect(() => {
-    if (!hydrated || !shouldPopUp(state, today)) return;
+    // Wait for path progress too, so a plan due today isn't missed.
+    if (!hydrated || !goalsReady || !shouldPopUp(state, today)) return;
     const timer = setTimeout(() => {
-      say(messageForDay(today));
+      say(opening);
       void companionActions.markShown(today);
     }, POP_DELAY_MS);
     return () => clearTimeout(timer);
-  }, [hydrated, state, today]);
+  }, [hydrated, goalsReady, state, today, opening]);
 
   // Slide in or out.
   useEffect(() => {
@@ -94,6 +108,11 @@ export function DailyCompanion({ bottom, onOpenWorld }: DailyCompanionProps) {
   }, [speaking, message]);
 
   const world = message.worldId ? findWorld(message.worldId) : undefined;
+  const plan = isPlanMessage(message);
+  // Under a world's thought, show that world's real next step from the user's path.
+  const nextStep = !plan ? nextStepTitle(WORLD_PATHS, goals, message.worldId) : undefined;
+  const eyebrow =
+    message.eyebrow ?? (message.kind === 'affirmation' ? 'For you today' : 'A small step');
   const translateY = progress.interpolate({
     inputRange: [0, 1],
     outputRange: [reduceMotion ? 0 : 260, 0],
@@ -103,7 +122,7 @@ export function DailyCompanion({ bottom, onOpenWorld }: DailyCompanionProps) {
     <>
       {!open ? (
         <Pressable
-          onPress={() => say(message)}
+          onPress={() => say(opening)}
           accessibilityRole="button"
           accessibilityLabel="Open today's thought"
           style={[styles.peek, { bottom }]}
@@ -135,18 +154,19 @@ export function DailyCompanion({ bottom, onOpenWorld }: DailyCompanionProps) {
             <View style={styles.eyebrowRow}>
               <View style={[styles.dot, { backgroundColor: world?.accent ?? brand.iris }]} />
               <Text style={styles.eyebrow}>
-                {message.kind === 'affirmation' ? 'For you today' : 'A small step'}
+                {eyebrow}
                 {world ? ` · ${world.name}` : ''}
               </Text>
             </View>
             <Text style={styles.message}>{message.text}</Text>
+            {nextStep ? <Text style={styles.nextStep}>Next on your path: {nextStep}</Text> : null}
 
             <View style={styles.actions}>
               <ActionButton label="Thanks" primary onPress={close} />
-              <ActionButton label="Another" onPress={() => say(nextMessage(message))} />
+              <ActionButton label="Another" onPress={() => say(another())} />
               {world ? (
                 <ActionButton
-                  label={`Visit ${world.name}`}
+                  label={plan ? 'Open my path' : `Visit ${world.name}`}
                   onPress={() => {
                     close();
                     onOpenWorld(world.id);
@@ -234,6 +254,7 @@ const styles = StyleSheet.create({
   dot: { width: 8, height: 8, borderRadius: 4 },
   eyebrow: { ...typography.caption, color: colors.textMuted },
   message: { ...typography.display, fontSize: 19, lineHeight: 26, color: colors.text },
+  nextStep: { ...typography.body, color: colors.textMuted },
   actions: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   action: {
     minHeight: 44,

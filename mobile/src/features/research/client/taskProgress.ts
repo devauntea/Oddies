@@ -12,7 +12,8 @@ const STORAGE_KEY = 'oddies.research.taskProgress.v1';
 /** taskId -> ISO timestamp of completion. */
 type Progress = Record<string, string>;
 
-let progress: Progress = {};
+const EMPTY_PROGRESS: Progress = {};
+let progress: Progress = EMPTY_PROGRESS;
 let loaded: Promise<void> | null = null;
 const listeners = new Set<() => void>();
 
@@ -53,7 +54,11 @@ export function useTaskProgress() {
   useEffect(() => {
     void load();
   }, []);
-  const snapshot = useSyncExternalStore(subscribe, () => progress);
+  const snapshot = useSyncExternalStore(
+    subscribe,
+    () => progress,
+    () => EMPTY_PROGRESS,
+  );
   const isDone = useCallback((taskId: string) => taskId in snapshot, [snapshot]);
   const toggle = useCallback((taskId: string) => setTaskDone(taskId, !(taskId in progress)), []);
   return { isDone, toggle };

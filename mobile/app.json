@@ -23,6 +23,10 @@
       "favicon": "./assets/favicon.png",
       "output": "server"
     },
-    "plugins": ["expo-router", "expo-web-browser", "@sentry/react-native"]
+    "plugins": [
+      ["expo-router", { "unstable_useServerRendering": true }],
+      "expo-web-browser",
+      "@sentry/react-native"
+    ]
   }
 }

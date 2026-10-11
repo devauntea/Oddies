@@ -5,7 +5,7 @@ const expoConfig = require('eslint-config-expo/flat');
 module.exports = defineConfig([
   expoConfig,
   {
-    ignores: ['dist/*', '.expo/*'],
+    ignores: ['dist/*', '.expo/*', '.vercel/**'],
   },
   {
     // Guardrail: the Nimble API key lives on the server only. Screens, hooks and components

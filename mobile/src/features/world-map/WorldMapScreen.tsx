@@ -53,7 +53,9 @@ export function WorldMapScreen() {
         />
       ) : null}
       <View style={[styles.header, { paddingTop: insets.top + spacing.md }]}>
-        <Text accessibilityRole="header" style={styles.title}>Oddies</Text>
+        <Text accessibilityRole="header" style={styles.title}>
+          Oddies
+        </Text>
         <Text style={styles.hint}>Tap a world to meet another you</Text>
       </View>
       <View style={[styles.footer, { paddingBottom: insets.bottom + spacing.md }]}>
@@ -76,7 +78,7 @@ const styles = StyleSheet.create({
     backgroundColor: canvas.edgeTop,
   },
   lowerEdge: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     top: '50%',
     backgroundColor: canvas.edgeBottom,
   },

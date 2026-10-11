@@ -30,6 +30,7 @@ Without `NIMBLE_API_KEY` the app runs on mock data, so you can build UI without 
 | Command             | What it does                                    |
 | ------------------- | ----------------------------------------------- |
 | `npm start`         | Expo dev server (also serves the API routes)    |
+| `npm run build:web` | Export the web app and API routes to `dist/`    |
 | `npm test`          | Jest unit tests                                 |
 | `npm run typecheck` | `tsc --noEmit`                                  |
 | `npm run lint`      | ESLint (`expo lint`)                            |
@@ -57,6 +58,31 @@ The app calls `/api/*` on the dev server during development. For preview and pro
 deploy the server (for example with EAS Hosting: `npx expo export --platform web` then
 `npx eas-cli deploy`), set `NIMBLE_API_KEY` as a server secret there, and set
 `EXPO_PUBLIC_API_URL` to the deployed URL for the app build.
+
+### Vercel test deployment
+
+The Vercel adapter in `api/index.js` serves the exported Expo API routes and page routes.
+Expo Router's SDK 57 server rendering option generates HTML with the requested world or topic
+instead of a placeholder route, so direct links and refreshes hydrate consistently.
+Run these commands from `/mobile`, with the repo's shared `/assets` folder present:
+
+```sh
+npm ci
+npm run check
+npx vercel link --project oddies-mobile
+npx vercel pull --yes --environment=preview
+SENTRY_DISABLE_AUTO_UPLOAD=true npx vercel build
+npx vercel deploy --prebuilt
+```
+
+Build locally before uploading: the map imports shared artwork from the repo's `/assets`,
+and the prebuilt deployment bundles that artwork without deploying the root web app.
+The web app calls its API routes on the same origin, so leave `EXPO_PUBLIC_API_URL` empty.
+Research uses mock data until `NIMBLE_API_KEY` is configured as a server environment variable
+in the Vercel project.
+
+To update the stable test domain after the first deployment, use `--environment=production`
+with `vercel pull`, then `--prod` with both `vercel build` and `vercel deploy --prebuilt`.
 
 ## Sentry
 

@@ -38,6 +38,21 @@
           <ul class="oddie-interests" data-role="chat-interests"></ul>
           <h3 class="oddie-milestones__title">Milestones</h3>
           <ol class="oddie-milestones" data-role="chat-milestones"></ol>
+          <div class="oddie-actions">
+            <button type="button" data-action="oddie-toggle-status"></button>
+            <button type="button" data-action="oddie-delete">Remove this branch</button>
+          </div>
+
+          <h3 class="chat__title">Conversation</h3>
+          <p class="chat__empty" data-role="chat-empty"></p>
+          <ol class="chat-log" data-role="chat-log" aria-live="polite"></ol>
+          <p class="chat__status" data-role="chat-status" role="status" hidden></p>
+          <p class="panel__error" data-role="chat-error" role="alert" hidden></p>
+          <form class="chat-form" data-role="chat-form">
+            <label class="chat-form__label" for="chat-input">Your message</label>
+            <textarea class="chat-form__input" id="chat-input" name="text" rows="2" maxlength="2000" required data-role="chat-input"></textarea>
+            <button type="submit" class="chat-form__send" data-action="chat-send">Send</button>
+          </form>
         </aside>
       </div>
     </main>

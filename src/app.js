@@ -3,14 +3,43 @@ const express = require('express');
 const { HttpError } = require('./errors');
 const { todayISO } = require('./dates');
 const { SEED, loadSeed } = require('./seed');
+const { oddieSystemPrompt } = require('./prompts');
 const store = require('./store');
 
 const PUBLIC_DIR = path.join(__dirname, '..', 'public');
+const MAX_CHAT_CHARS = 2000;
+
+// The app has no accounts, so anyone with the URL can spend model and search
+// credits. This caps each IP at AI_LIMIT calls per AI_WINDOW_MS.
+const AI_LIMIT = 40;
+const AI_WINDOW_MS = 10 * 60 * 1000;
+
+function createAiLimiter() {
+  const hits = new Map();
+  return (req, res, next) => {
+    const now = Date.now();
+    const recent = (hits.get(req.ip) || []).filter((at) => now - at < AI_WINDOW_MS);
+    if (recent.length >= AI_LIMIT) {
+      throw new HttpError(429, 'rate_limited', 'Too many requests. Wait a few minutes and try again.');
+    }
+    recent.push(now);
+    hits.set(req.ip, recent);
+    next();
+  };
+}
+
+function requireText(value, field, max) {
+  const text = typeof value === 'string' ? value.trim() : '';
+  if (!text) throw new HttpError(400, 'invalid_input', `${field} is required`);
+  if (text.length > max) throw new HttpError(400, 'invalid_input', `${field} is too long (max ${max} characters)`);
+  return text;
+}
 
 // Builds the Express app. Everything it talks to is passed in, so tests can
 // hand it an in-memory database and fake Gemini and Nimble clients.
-function createApp({ db, gemini, nimble, config = {} }) {
+function createApp({ db, gemini, nimble }) {
   const app = express();
+  const limitAi = createAiLimiter();
   app.disable('x-powered-by');
   app.set('trust proxy', true);
   app.use(express.json({ limit: '200kb' }));
@@ -27,6 +56,54 @@ function createApp({ db, gemini, nimble, config = {} }) {
   };
 
   app.get('/api/state', (req, res) => res.json(state()));
+
+  // ---------- Oddies ----------
+
+  app.patch('/api/oddies/:id', (req, res) => {
+    res.json({ oddie: store.updateOddie(db, req.params.id, req.body || {}) });
+  });
+
+  app.delete('/api/oddies/:id', (req, res) => {
+    store.deleteOddie(db, req.params.id);
+    res.json({ ok: true });
+  });
+
+  // ---------- Chat ----------
+
+  app.get('/api/oddies/:id/chat', (req, res) => {
+    const oddie = store.getOddie(db, req.params.id);
+    res.json({ messages: store.chatHistory(db, oddie.id) });
+  });
+
+  app.post('/api/oddies/:id/chat', limitAi, async (req, res) => {
+    const oddie = store.getOddie(db, req.params.id);
+    const text = requireText(req.body && req.body.text, 'text', MAX_CHAT_CHARS);
+
+    const system = oddieSystemPrompt({
+      self: store.getSelf(db),
+      oddie,
+      progress: store.progressFor(db, oddie.id),
+      today: todayISO(),
+    });
+    const contents = [
+      ...store.chatHistory(db, oddie.id).map((m) => ({
+        role: m.role === 'user' ? 'user' : 'model',
+        parts: [{ text: m.text }],
+      })),
+      { role: 'user', parts: [{ text }] },
+    ];
+
+    const { text: reply } = await gemini.generate({
+      task: 'chat',
+      system,
+      contents,
+      attributes: { 'oddies.oddie_id': oddie.id },
+    });
+    if (!reply.trim()) throw new HttpError(502, 'gemini_failed', 'The oddie had nothing to say. Try again.');
+
+    const messages = store.addExchange(db, oddie.id, text, reply.trim());
+    res.json({ reply: messages[1].text, messages });
+  });
 
   app.use('/api', (req, res) => {
     throw new HttpError(404, 'not_found', `No route for ${req.method} ${req.originalUrl}`);

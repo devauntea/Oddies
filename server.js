@@ -8,11 +8,15 @@ try {
 const { openDb } = require('./src/db');
 const { seedIfEmpty } = require('./src/seed');
 const { createApp } = require('./src/app');
+const { createGemini } = require('./src/gemini');
 
 const db = openDb();
 if (seedIfEmpty(db)) console.log('Empty database, loaded the demo profile.');
 
-const app = createApp({ db });
+const gemini = createGemini();
+console.log(`Gemini: ${gemini.configured ? `on, model ${gemini.model}` : 'off (GEMINI_API_KEY not set)'}`);
+
+const app = createApp({ db, gemini });
 const port = Number(process.env.PORT) || 3000;
 
 app.listen(port, '0.0.0.0', () => {

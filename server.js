@@ -1,10 +1,5 @@
-// Local dev reads a .env file if there is one. On Fly the values come from secrets.
-try {
-  process.loadEnvFile();
-} catch {
-  // no .env file, which is fine
-}
-
+// Start with `node --import ./instrument.js server.js` (npm start does this).
+// instrument.js loads .env and starts Sentry before anything here runs.
 const { openDb } = require('./src/db');
 const { seedIfEmpty } = require('./src/seed');
 const { createApp } = require('./src/app');

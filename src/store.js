@@ -147,10 +147,60 @@ function updateOddie(db, id, patch) {
     if (!Number.isInteger(patch.branch_order)) throw new HttpError(400, 'invalid_input', 'branch_order must be a whole number');
     next.branch_order = patch.branch_order;
   }
-  db.prepare(
-    `UPDATE oddie SET name = @name, life = @life, interests = @interests, persona_brief = @persona_brief,
-     horizon_years = @horizon_years, status = @status, branch_order = @branch_order WHERE id = @id`
-  ).run(next);
+  const titles = 'milestones' in patch ? milestoneTitles(patch.milestones) : null;
+
+  db.transaction(() => {
+    db.prepare(
+      `UPDATE oddie SET name = @name, life = @life, interests = @interests, persona_brief = @persona_brief,
+       horizon_years = @horizon_years, status = @status, branch_order = @branch_order WHERE id = @id`
+    ).run(next);
+    if (titles) setMilestoneTitles(db, current, titles);
+  })();
+  return getOddie(db, id);
+}
+
+function milestoneTitles(value) {
+  const titles = (Array.isArray(value) ? value : [])
+    .map((m) => text(typeof m === 'string' ? m : m && m.title, 'milestone title', 120, { required: false }))
+    .filter(Boolean)
+    .slice(0, MAX_MILESTONES);
+  if (!titles.length) throw new HttpError(400, 'invalid_input', 'A path needs at least one milestone');
+  return titles;
+}
+
+// Rewrites a branch's milestones by position. The milestone at each position
+// keeps its progress and its steps, extra titles are added at the end, and
+// positions past the end of the new list are removed.
+function setMilestoneTitles(db, oddie, titles) {
+  titles.forEach((title, position) => {
+    const existing = oddie.milestones[position];
+    if (existing) db.prepare('UPDATE milestone SET title = ? WHERE id = ?').run(title, existing.id);
+    else db.prepare('INSERT INTO milestone (oddie_id, position, title, reached) VALUES (?, ?, ?, 0)').run(oddie.id, position, title);
+  });
+  for (const extra of oddie.milestones.slice(titles.length)) {
+    db.prepare('DELETE FROM milestone WHERE id = ?').run(extra.id);
+  }
+}
+
+// Adds one new branch at the bottom of the tree.
+function addOddie(db, input) {
+  const count = db.prepare('SELECT COUNT(*) AS count FROM oddie').get().count;
+  if (count >= MAX_ODDIES) throw new HttpError(400, 'invalid_input', `The tree holds at most ${MAX_ODDIES} paths`);
+  const oddie = cleanOddie(input, count);
+  const order = db.prepare('SELECT COALESCE(MAX(branch_order), -1) + 1 AS next FROM oddie').get().next;
+
+  const id = db.transaction(() => {
+    const { lastInsertRowid } = db
+      .prepare(
+        `INSERT INTO oddie (name, life, interests, persona_brief, horizon_years, status, branch_order)
+         VALUES (?, ?, ?, ?, ?, ?, ?)`
+      )
+      .run(oddie.name, oddie.life, JSON.stringify(oddie.interests), oddie.persona_brief, oddie.horizon_years, oddie.status, order);
+    oddie.milestones.forEach((m, position) => {
+      db.prepare('INSERT INTO milestone (oddie_id, position, title, reached) VALUES (?, ?, ?, 0)').run(lastInsertRowid, position, m.title);
+    });
+    return Number(lastInsertRowid);
+  })();
   return getOddie(db, id);
 }
 
@@ -293,6 +343,8 @@ function getState(db, today) {
 module.exports = {
   STEP_TYPES,
   STEPS_TO_REACH,
+  cleanOddie,
+  addOddie,
   getSelf,
   setSelf,
   listOddies,

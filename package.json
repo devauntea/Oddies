@@ -5,8 +5,9 @@
   "description": "Your possible lives as a sideways family tree. Pick one branch to work on today.",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js",
-    "dev": "node --watch server.js",
+    "start": "node --import ./instrument.js server.js",
+    "dev": "scripts/keys.sh run node --watch --import ./instrument.js server.js",
+    "keys": "scripts/keys.sh",
     "test": "node --test \"test/*.test.js\""
   },
   "engines": {

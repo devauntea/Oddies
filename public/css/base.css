@@ -243,8 +243,31 @@ label {
   white-space: pre-wrap;
 }
 
-.oddie-actions {
+.oddie-actions,
+.intake-form__actions {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+  margin: 8px 0;
+}
+
+/* ---------- Path forms (edit, add, intake drafts) ---------- */
+
+.path-form__field {
+  margin: 8px 0;
+}
+
+.path-form__label {
+  display: block;
+}
+
+summary {
+  cursor: pointer;
+  padding: 10px 0;
+}
+
+.draft-card,
+.draft-self {
+  margin: 16px 0;
+  min-width: 0;
 }

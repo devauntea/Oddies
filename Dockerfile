@@ -15,4 +15,4 @@ COPY package.json server.js instrument.js ./
 COPY src ./src
 COPY public ./public
 EXPOSE 8080
-CMD ["node", "server.js"]
+CMD ["node", "--import", "./instrument.js", "server.js"]

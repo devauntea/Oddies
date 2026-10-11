@@ -6,12 +6,16 @@
     <title>Your tree | Oddies</title>
     <meta name="description" content="Your possible lives, drawn as branches. Talk to any of them and pick one to work on today.">
     <link rel="stylesheet" href="/css/base.css">
+    <script src="https://browser.sentry-cdn.com/11.6.0/bundle.tracing.min.js" integrity="sha384-yktoq3bnSR9ZyyKjW/n9Co8AAItq1N/6OuvY9mTtMhl/IBpCbsDs6N6hugod29Hc" crossorigin="anonymous"></script>
+    <script src="/config.js"></script>
+    <script src="/js/sentry-init.js"></script>
   </head>
   <body class="page page--tree" data-page="tree">
     <header class="site-header">
       <a class="site-header__home" href="/">Oddies</a>
       <nav class="site-header__nav" aria-label="Site">
         <a href="/intake">Start my own</a>
+        <button type="button" class="site-header__reset" data-action="demo-reset">Reset demo</button>
       </nav>
     </header>
 
@@ -25,6 +29,15 @@
           <svg class="tree" data-role="tree" role="group" xmlns="http://www.w3.org/2000/svg"></svg>
         </div>
         <p class="tree-section__hint">Select the node at the end of a branch to open that oddie.</p>
+
+        <details class="path-add" data-role="path-add">
+          <summary class="path-add__summary">Add a path</summary>
+          <form class="path-form" data-role="path-add-form">
+            <div class="path-form__fields" data-role="path-add-fields"></div>
+            <p class="panel__error" data-role="path-add-error" role="alert" hidden></p>
+            <button type="submit" class="path-form__save" data-action="path-add-save">Add this path</button>
+          </form>
+        </details>
       </section>
 
       <div class="panels">
@@ -59,10 +72,20 @@
           <ul class="oddie-interests" data-role="chat-interests"></ul>
           <h3 class="oddie-milestones__title">Milestones</h3>
           <ol class="oddie-milestones" data-role="chat-milestones"></ol>
+
           <div class="oddie-actions">
             <button type="button" data-action="oddie-toggle-status"></button>
-            <button type="button" data-action="oddie-delete">Remove this branch</button>
+            <button type="button" data-action="oddie-delete">Remove this path</button>
           </div>
+          <details class="path-edit" data-role="path-edit">
+            <summary class="path-edit__summary">Edit this path</summary>
+            <form class="path-form" data-role="path-edit-form">
+              <div class="path-form__fields" data-role="path-edit-fields"></div>
+              <p class="path-form__note">Milestones keep their progress by position: line 1 stays milestone 1.</p>
+              <p class="panel__error" data-role="path-edit-error" role="alert" hidden></p>
+              <button type="submit" class="path-form__save" data-action="path-edit-save">Save changes</button>
+            </form>
+          </details>
 
           <h3 class="chat__title">Conversation</h3>
           <p class="chat__empty" data-role="chat-empty"></p>

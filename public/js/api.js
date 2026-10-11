@@ -27,6 +27,7 @@ export const api = {
   state: () => request('GET', '/api/state'),
   intake: (text) => request('POST', '/api/intake', { text }),
   saveOddies: (payload) => request('POST', '/api/oddies', payload),
+  addOddie: (oddie) => request('POST', '/api/oddies/add', oddie),
   updateOddie: (id, patch) => request('PATCH', `/api/oddies/${id}`, patch),
   deleteOddie: (id) => request('DELETE', `/api/oddies/${id}`),
   chatHistory: (id) => request('GET', `/api/oddies/${id}/chat`),

@@ -1,8 +1,10 @@
-// Runs tree.html: loads the state, draws the tree, and opens the oddie panel.
+// Runs tree.html: loads the state, draws the tree, and wires the oddie panel,
+// the Today panel, path editing, and the demo reset.
 import { api, setNotice } from './api.js';
 import { renderTree } from './tree.js';
 import { initChat } from './chat.js';
 import { initToday } from './today.js';
+import { createPathFields } from './path-form.js';
 
 const $ = (selector) => document.querySelector(selector);
 
@@ -18,6 +20,13 @@ const els = {
   close: $('[data-action="chat-close"]'),
   toggleStatus: $('[data-action="oddie-toggle-status"]'),
   remove: $('[data-action="oddie-delete"]'),
+  reset: $('[data-action="demo-reset"]'),
+  edit: $('[data-role="path-edit"]'),
+  editForm: $('[data-role="path-edit-form"]'),
+  editError: $('[data-role="path-edit-error"]'),
+  add: $('[data-role="path-add"]'),
+  addForm: $('[data-role="path-add-form"]'),
+  addError: $('[data-role="path-add-error"]'),
 };
 
 const chat = initChat(els.panel);
@@ -25,9 +34,13 @@ const today = initToday($('[data-panel="today"]'), {
   refresh: () => refresh(),
   onError: (error) => setNotice(els.notice, error.message),
 });
+const editFields = createPathFields($('[data-role="path-edit-fields"]'));
+const addFields = createPathFields($('[data-role="path-add-fields"]'));
+addFields.clear();
 
 let state = null;
 let openOddieId = null;
+let editFilledFor = null; // the oddie whose values are in the edit form
 
 const openOddie = () => state.oddies.find((o) => o.id === openOddieId) || null;
 
@@ -44,7 +57,10 @@ function listItems(list, items, build) {
 function renderPanel() {
   const oddie = openOddie();
   els.panel.hidden = !oddie;
-  if (!oddie) return;
+  if (!oddie) {
+    editFilledFor = null;
+    return;
+  }
   els.panel.dataset.oddieId = oddie.id;
   els.panel.dataset.status = oddie.status;
   els.name.textContent = oddie.name;
@@ -60,10 +76,19 @@ function renderPanel() {
     li.dataset.reached = milestone.reached;
     li.textContent = `${milestone.title}${milestone.reached ? ' (reached)' : ''}`;
   });
+  // Only refill the edit form when a different oddie opens, so a redraw never
+  // wipes what someone is typing.
+  if (editFilledFor !== oddie.id) {
+    editFields.set(oddie);
+    editFilledFor = oddie.id;
+    els.edit.open = false;
+    setNotice(els.editError, '');
+  }
 }
 
 function render() {
-  els.selfLine.textContent = `${state.self.name}, ${state.self.city}. ${state.oddies.length} branches open.`;
+  const count = state.oddies.length;
+  els.selfLine.textContent = `${state.self.name}, ${state.self.city}. ${count} ${count === 1 ? 'path' : 'paths'} open.`;
   renderTree(els.tree, state, { openOddieId, onOddieSelect: selectOddie });
   renderPanel();
   today.render(state);
@@ -96,11 +121,12 @@ async function refresh() {
 }
 
 // Runs a server call, then reloads the state. Errors go to the page notice.
-async function act(work) {
+async function act(work, done) {
   setNotice(els.notice, '');
   try {
     await work();
     await refresh();
+    if (done) setNotice(els.notice, done);
   } catch (error) {
     setNotice(els.notice, error.message);
   }
@@ -117,8 +143,45 @@ els.toggleStatus.addEventListener('click', () => {
 els.remove.addEventListener('click', () => {
   const oddie = openOddie();
   if (!oddie) return;
-  const ok = window.confirm(`Remove ${oddie.name} and everything on that branch? This cannot be undone.`);
-  if (ok) act(() => api.deleteOddie(oddie.id));
+  const ok = window.confirm(`Remove ${oddie.name} and everything on that path? This cannot be undone.`);
+  if (ok) act(() => api.deleteOddie(oddie.id), `Removed ${oddie.name}.`);
+});
+
+els.editForm.addEventListener('submit', async (event) => {
+  event.preventDefault();
+  const oddie = openOddie();
+  if (!oddie) return;
+  setNotice(els.editError, '');
+  try {
+    const { oddie: saved } = await api.updateOddie(oddie.id, editFields.get());
+    editFilledFor = null; // refill the form with what the server saved
+    await refresh();
+    setNotice(els.notice, `Saved ${saved.name}.`);
+  } catch (error) {
+    setNotice(els.editError, error.message);
+  }
+});
+
+els.addForm.addEventListener('submit', async (event) => {
+  event.preventDefault();
+  setNotice(els.addError, '');
+  try {
+    const { oddie } = await api.addOddie(addFields.get());
+    addFields.clear();
+    els.add.open = false;
+    await refresh();
+    setNotice(els.notice, `Added ${oddie.name}.`);
+    focusOddieNode(oddie.id);
+  } catch (error) {
+    setNotice(els.addError, error.message);
+  }
+});
+
+els.reset.addEventListener('click', () => {
+  const ok = window.confirm('Reset to the demo? This wipes the current paths, chats, steps and picks.');
+  if (!ok) return;
+  openOddieId = null;
+  act(() => api.resetDemo(), 'Demo reset.');
 });
 
 refresh().catch((error) => setNotice(els.notice, error.message));

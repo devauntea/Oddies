@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Start your own tree | Oddies</title>
+    <meta name="description" content="Paste what you know about the lives you could live and Oddies drafts four to six paths you can edit.">
+    <link rel="stylesheet" href="/css/base.css">
+    <script src="https://browser.sentry-cdn.com/11.6.0/bundle.tracing.min.js" integrity="sha384-yktoq3bnSR9ZyyKjW/n9Co8AAItq1N/6OuvY9mTtMhl/IBpCbsDs6N6hugod29Hc" crossorigin="anonymous"></script>
+    <script src="/config.js"></script>
+    <script src="/js/sentry-init.js"></script>
+  </head>
+  <body class="page page--intake" data-page="intake">
+    <header class="site-header">
+      <a class="site-header__home" href="/">Oddies</a>
+      <nav class="site-header__nav" aria-label="Site">
+        <a href="/tree">Back to the tree</a>
+      </nav>
+    </header>
+
+    <main class="intake">
+      <h1 class="intake__title">Start your own tree</h1>
+      <p class="intake__lead">Paste what your AI assistant knows about you, or just list the lives you think about. Oddies drafts four to six paths. You can edit all of them before anything is saved.</p>
+
+      <form class="intake-form" data-role="intake-form">
+        <label class="intake-form__label" for="intake-text">Your text</label>
+        <textarea class="intake-form__input" id="intake-text" name="text" rows="12" maxlength="20000" required data-role="intake-text"></textarea>
+        <div class="intake-form__actions">
+          <button type="submit" class="button" data-action="build-oddies">Build my oddies</button>
+          <button type="button" class="button" data-action="draft-manual">Write the paths by hand instead</button>
+        </div>
+      </form>
+
+      <p class="notice" data-role="intake-status" role="status" hidden></p>
+      <div class="today-error" data-role="intake-error" role="alert" hidden>
+        <p data-role="intake-error-text"></p>
+        <button type="button" data-action="intake-retry">Try again</button>
+      </div>
+
+      <section class="drafts" data-role="drafts" aria-labelledby="drafts-heading" hidden>
+        <h2 class="drafts__title" id="drafts-heading" tabindex="-1">Review your oddies</h2>
+        <p class="drafts__lead">Change anything. Remove the ones that are wrong. Nothing is saved until you press Save.</p>
+
+        <form class="drafts-form" data-role="drafts-form">
+          <fieldset class="draft-self" data-role="draft-self">
+            <legend class="draft-self__legend">You, today</legend>
+            <label class="path-form__field">
+              <span class="path-form__label">Your name</span>
+              <input class="path-form__input" name="self_name" required maxlength="80" data-field="self-name">
+            </label>
+            <label class="path-form__field">
+              <span class="path-form__label">Your city. Today's steps are searched near here.</span>
+              <input class="path-form__input" name="self_city" required maxlength="80" data-field="self-city">
+            </label>
+            <label class="path-form__field">
+              <span class="path-form__label">Who you are today, in a few sentences</span>
+              <textarea class="path-form__input" name="self_summary" rows="4" required maxlength="2000" data-field="self-summary"></textarea>
+            </label>
+          </fieldset>
+
+          <div class="draft-list" data-role="draft-list"></div>
+
+          <button type="button" class="button" data-action="draft-add">Add another path</button>
+          <p class="drafts__warning">Saving replaces the tree that is there now, including its chats, steps and progress.</p>
+          <p class="panel__error" data-role="drafts-error" role="alert" hidden></p>
+          <button type="submit" class="button" data-action="save-oddies">Save and open the tree</button>
+        </form>
+      </section>
+    </main>
+
+    <script type="module" src="/js/intake.js"></script>
+  </body>
+</html>

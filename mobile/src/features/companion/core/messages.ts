@@ -16,6 +16,8 @@ export interface CompanionMessage {
   text: string;
   /** The world this thought comes from, if any. */
   worldId?: WorldId;
+  /** Overrides the default "For you today" / "A small step" line above the text. */
+  eyebrow?: string;
 }
 
 export const MESSAGES: readonly CompanionMessage[] = [
